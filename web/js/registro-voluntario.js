@@ -555,4 +555,5 @@ function generarPasswordTemporal() {
   for (let i = 0; i < 16; i++) {
     resultado += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
   }
-  return resu
+  return resultado;
+}
