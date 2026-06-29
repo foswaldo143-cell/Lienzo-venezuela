@@ -10,14 +10,20 @@
 //       update: el propietario solo puede tocar campos NO sensibles. Los
 //               campos sensibles (estado, estadoVerificacion, rol,
 //               verificadoPor, confianzaIA, qrToken, motivoRechazo,
-//               fechaVerificacion) quedan bloqueados para el cliente: solo
-//               Cloud Functions (Admin SDK) los puede cambiar, porque el
-//               Admin SDK ignora estas reglas.
+//               fechaVerificacion, deshabilitado, restringido) quedan
+//               bloqueados para el cliente: solo Cloud Functions (Admin SDK)
+//               los puede cambiar, porque el Admin SDK ignora estas reglas.
+//               (deshabilitado/restringido se agregaron junto con el modulo
+//               de gestion de usuarios del panel: si no estuvieran bloqueados,
+//               una cuenta inhabilitada podria "reactivarse" a si misma
+//               escribiendo deshabilitado:false directamente en su doc.)
 //       read:   el propio dueno, o un admin/verificador (via custom claim
 //               "role" en el ID token).
 //   - verificaciones/{uid}: solo lectura para admin/verificador. Ninguna
 //       escritura desde el cliente (solo Cloud Functions, que usan el Admin
 //       SDK y por lo tanto no pasan por estas reglas).
+//   - cedulasBloqueadas/{cedula}: cerrada por completo al cliente (cae en el
+//       match /{document=**} de mas abajo); solo Cloud Functions la leen/escriben.
 //
 // El rol se verifica SIEMPRE con request.auth.token.role (custom claim del
 // ID token de Firebase Auth), nunca con un campo de Firestore editable por
@@ -81,7 +87,9 @@ service cloud.firestore {
                'confianzaIA',
                'qrToken',
                'motivoRechazo',
-               'fechaVerificacion'
+               'fechaVerificacion',
+               'deshabilitado',
+               'restringido'
              ])
         );
 

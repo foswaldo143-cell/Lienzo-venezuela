@@ -49,7 +49,35 @@
         <button type="submit" class="boton-primario" id="btn-login">
           <span id="texto-btn-login">Iniciar sesión</span>
         </button>
+
+        <button type="button" class="boton-texto" id="btn-mostrar-recuperacion" style="margin-top:var(--espacio-sm);">
+          ¿Olvidaste tu contraseña?
+        </button>
       </form>
+
+      <div class="oculto" id="panel-recuperacion" style="margin-top:var(--espacio-md); border-top:1px solid var(--borde); padding-top:var(--espacio-md);">
+        <p class="descripcion-paso" style="margin-bottom:var(--espacio-sm);">
+          Escribe tu cédula y te enviaremos una nueva contraseña a tu correo registrado,
+          siempre que tu cuenta ya esté aprobada y tu correo verificado.
+        </p>
+        <div class="campo">
+          <label for="cedula-numero-recuperacion">Cédula</label>
+          <div class="fila-cedula">
+            <select id="cedula-tipo-recuperacion" aria-label="Tipo de cédula">
+              <option value="V">V</option>
+              <option value="E">E</option>
+            </select>
+            <input type="text" id="cedula-numero-recuperacion" inputmode="numeric" placeholder="12345678">
+          </div>
+        </div>
+        <div id="mensaje-recuperacion" class="mensaje"></div>
+        <div class="grupo-botones">
+          <button type="button" class="boton-secundario" id="btn-cancelar-recuperacion">Cancelar</button>
+          <button type="button" class="boton-primario" id="btn-enviar-recuperacion">
+            <span id="texto-btn-recuperacion">Enviar nueva contraseña</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="pie-secundario">

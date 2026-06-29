@@ -7,9 +7,11 @@ import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebase
 import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { ref, uploadBytes } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-functions.js";
+import { poblarSelectEstados, poblarSelectCiudades } from "./venezuela-datos.js";
 
 const DOMINIO_AUTH_SINTETICO = "@voluntarios.lienzo.app";
 const TOTAL_PASOS = 6;
+const SEGUNDOS_ESPERA_REENVIO_CODIGO = 60;
 
 let pasoActual = 1;
 
@@ -18,12 +20,12 @@ const estado = {
   nombre: "",
   apellido: "",
   cedula: "",
+  fechaNacimiento: "",
+  edad: null,
   telefono: "",
   telefonoEmergencia: "",
   emailPersonal: "",
   emailVerificado: false,
-  lat: null,
-  lng: null,
   ciudad: "",
   estadoProvincia: "",
   direccionTexto: "",
@@ -61,27 +63,53 @@ function mostrarErrorPaso(idError, texto) {
   el.classList.add("visible");
 }
 
-/* Validación + recolección de datos de cada paso antes de avanzar. */
+/* ---------------------- Paso 1: cálculo de edad ---------------------- */
+
+function calcularEdadDesdeFecha(fechaStr) {
+  if (!fechaStr) return null;
+  const partes = fechaStr.split("-");
+  if (partes.length !== 3) return null;
+  const anioNac = parseInt(partes[0], 10);
+  const mesNac = parseInt(partes[1], 10);
+  const diaNac = parseInt(partes[2], 10);
+  if (!anioNac || !mesNac || !diaNac) return null;
+
+  const hoy = new Date();
+  let edad = hoy.getUTCFullYear() - anioNac;
+  const mesActual = hoy.getUTCMonth() + 1;
+  const diaActual = hoy.getUTCDate();
+  if (mesActual < mesNac || (mesActual === mesNac && diaActual < diaNac)) {
+    edad -= 1;
+  }
+  return edad;
+}
+
+const inputFechaNacimiento = document.getElementById("fecha-nacimiento");
+const edadCalculadaTexto = document.getElementById("edad-calculada");
+const avisoMenorEdad = document.getElementById("aviso-menor-edad");
+
+inputFechaNacimiento.addEventListener("change", () => {
+  const edad = calcularEdadDesdeFecha(inputFechaNacimiento.value);
+  if (edad === null) {
+    edadCalculadaTexto.textContent = "";
+    avisoMenorEdad.classList.add("oculto");
+    return;
+  }
+  edadCalculadaTexto.textContent = `Edad: ${edad} años`;
+  if (edad < 18) {
+    avisoMenorEdad.textContent = "Por razones de seguridad, en este momento no podemos aceptar voluntarios menores de 18 años.";
+    avisoMenorEdad.classList.remove("oculto");
+  } else {
+    avisoMenorEdad.classList.add("oculto");
+  }
+});
+
+/* ---------------------- Validación + recolección de cada paso ---------------------- */
+/* Devuelve true/false o una Promise<boolean> (paso 1 necesita verificar la
+   cédula contra el servidor antes de permitir avanzar). */
 function validarYGuardarPaso(numero) {
   if (numero === 1) {
-    limpiarError("error-paso-1");
-    const nombre = document.getElementById("nombre").value.trim();
-    const apellido = document.getElementById("apellido").value.trim();
-    const tipoCedula = document.getElementById("cedula-tipo-reg").value;
-    const numeroCedula = document.getElementById("cedula-numero-reg").value.trim();
-
-    if (!nombre || !apellido) {
-      mostrarErrorPaso("error-paso-1", "Por favor completa tu nombre y apellido.");
-      return false;
-    }
-    if (!/^\d{6,9}$/.test(numeroCedula)) {
-      mostrarErrorPaso("error-paso-1", "El número de cédula debe tener solo dígitos (entre 6 y 9 números).");
-      return false;
-    }
-    estado.nombre = nombre;
-    estado.apellido = apellido;
-    estado.cedula = tipoCedula + numeroCedula;
-    return true;
+    return validarYGuardarPaso1();
   }
 
   if (numero === 2) {
@@ -109,22 +137,26 @@ function validarYGuardarPaso(numero) {
       mostrarErrorPaso("error-paso-3", "Escribe un correo electrónico válido.");
       return false;
     }
+    if (!estado.emailVerificado) {
+      mostrarErrorPaso("error-paso-3", "Debes verificar tu correo antes de continuar.");
+      return false;
+    }
     estado.emailPersonal = email;
     return true;
   }
 
   if (numero === 4) {
     limpiarError("error-paso-4");
-    const ciudad = document.getElementById("ciudad").value.trim();
     const estadoProvincia = document.getElementById("estado-provincia").value;
+    const ciudad = document.getElementById("ciudad").value;
     const direccionTexto = document.getElementById("direccion-texto").value.trim();
 
-    if (!ciudad || !estadoProvincia || !direccionTexto) {
-      mostrarErrorPaso("error-paso-4", "Completa ciudad, estado y dirección detallada.");
+    if (!estadoProvincia || !ciudad || !direccionTexto) {
+      mostrarErrorPaso("error-paso-4", "Completa estado, ciudad y dirección.");
       return false;
     }
-    if (estado.lat === null || estado.lng === null) {
-      mostrarErrorPaso("error-paso-4", "Marca tu ubicación en el mapa buscando tu dirección o tocando el punto exacto.");
+    if (direccionTexto.length > 50) {
+      mostrarErrorPaso("error-paso-4", "La dirección no puede tener más de 50 caracteres.");
       return false;
     }
     estado.ciudad = ciudad;
@@ -149,14 +181,92 @@ function validarYGuardarPaso(numero) {
   return true;
 }
 
+const btnSiguiente1 = document.getElementById("btn-siguiente-1");
+const textoBtnSiguiente1 = document.getElementById("texto-btn-siguiente-1");
+
+async function validarYGuardarPaso1() {
+  limpiarError("error-paso-1");
+  avisoMenorEdad.classList.add("oculto");
+
+  const nombre = document.getElementById("nombre").value.trim();
+  const apellido = document.getElementById("apellido").value.trim();
+  const tipoCedula = document.getElementById("cedula-tipo-reg").value;
+  const numeroCedula = document.getElementById("cedula-numero-reg").value.trim();
+  const fechaNacimiento = inputFechaNacimiento.value;
+
+  if (!nombre || !apellido) {
+    mostrarErrorPaso("error-paso-1", "Por favor completa tu nombre y apellido.");
+    return false;
+  }
+  if (!/^\d{6,9}$/.test(numeroCedula)) {
+    mostrarErrorPaso("error-paso-1", "El número de cédula debe tener solo dígitos (entre 6 y 9 números).");
+    return false;
+  }
+  if (!fechaNacimiento) {
+    mostrarErrorPaso("error-paso-1", "Por favor indica tu fecha de nacimiento.");
+    return false;
+  }
+
+  const edad = calcularEdadDesdeFecha(fechaNacimiento);
+  if (edad === null) {
+    mostrarErrorPaso("error-paso-1", "La fecha de nacimiento no es válida.");
+    return false;
+  }
+  if (edad < 18) {
+    avisoMenorEdad.textContent = "Por razones de seguridad, en este momento no podemos aceptar voluntarios menores de 18 años.";
+    avisoMenorEdad.classList.remove("oculto");
+    return false;
+  }
+
+  const cedulaCompleta = tipoCedula + numeroCedula;
+
+  btnSiguiente1.disabled = true;
+  const textoOriginal = textoBtnSiguiente1.textContent;
+  textoBtnSiguiente1.innerHTML = '<span class="cargando-spinner"></span> Verificando...';
+
+  try {
+    const functions = getFunctions();
+    const verificarCedulaDisponible = httpsCallable(functions, "verificarCedulaDisponible");
+    const resultado = await verificarCedulaDisponible({ cedula: cedulaCompleta });
+
+    if (resultado && resultado.data && resultado.data.disponible === false) {
+      mostrarErrorPaso(
+        "error-paso-1",
+        resultado.data.mensaje || "Esta cédula ya está registrada y no puede continuar."
+      );
+      return false;
+    }
+  } catch (error) {
+    console.warn("No se pudo verificar la cédula contra el servidor todavía:", error);
+    // No bloqueamos el avance si el servidor no está disponible: el backend
+    // vuelve a validar la cédula de todas formas al enviar el registro final.
+  } finally {
+    btnSiguiente1.disabled = false;
+    textoBtnSiguiente1.textContent = textoOriginal;
+  }
+
+  estado.nombre = nombre;
+  estado.apellido = apellido;
+  estado.cedula = cedulaCompleta;
+  estado.fechaNacimiento = fechaNacimiento;
+  estado.edad = edad;
+  return true;
+}
+
 document.querySelectorAll("[data-siguiente]").forEach((boton) => {
-  boton.addEventListener("click", () => {
+  boton.addEventListener("click", async () => {
     const destino = parseInt(boton.dataset.siguiente, 10);
-    if (validarYGuardarPaso(pasoActual)) {
-      if (destino === 6) {
-        construirResumen();
+    boton.disabled = true;
+    try {
+      const ok = await validarYGuardarPaso(pasoActual);
+      if (ok) {
+        if (destino === 6) {
+          construirResumen();
+        }
+        mostrarPaso(destino);
       }
-      mostrarPaso(destino);
+    } finally {
+      boton.disabled = false;
     }
   });
 });
@@ -211,6 +321,8 @@ async function asegurarCuentaYPerfilParcial() {
     cedula: estado.cedula.toUpperCase(),
     nombre: estado.nombre,
     apellido: estado.apellido,
+    fechaNacimiento: estado.fechaNacimiento,
+    edad: estado.edad,
     telefono: estado.telefono,
     telefonoEmergencia: estado.telefonoEmergencia,
     emailPersonal: estado.emailPersonal,
@@ -231,8 +343,42 @@ const estadoEnvioCodigo = document.getElementById("estado-envio-codigo");
 const bloqueCodigo = document.getElementById("bloque-codigo");
 const btnVerificarCodigo = document.getElementById("btn-verificar-codigo");
 const estadoVerificacionEmail = document.getElementById("estado-verificacion-email");
+const btnReenviarCodigo = document.getElementById("btn-reenviar-codigo");
+const contadorReenvio = document.getElementById("contador-reenvio");
+const btnSiguiente3 = document.getElementById("btn-siguiente-3");
 
-btnEnviarCodigo.addEventListener("click", async () => {
+let intervaloReenvio = null;
+
+function iniciarCooldownReenvio(segundosIniciales) {
+  let restante = segundosIniciales;
+  btnReenviarCodigo.classList.remove("oculto");
+  btnReenviarCodigo.disabled = true;
+  contadorReenvio.classList.remove("oculto");
+
+  if (intervaloReenvio) {
+    window.clearInterval(intervaloReenvio);
+  }
+
+  function pintar() {
+    contadorReenvio.textContent = `Podrás reenviar el código en ${restante}s.`;
+  }
+  pintar();
+
+  intervaloReenvio = window.setInterval(() => {
+    restante -= 1;
+    if (restante <= 0) {
+      window.clearInterval(intervaloReenvio);
+      intervaloReenvio = null;
+      btnReenviarCodigo.disabled = false;
+      contadorReenvio.classList.add("oculto");
+      contadorReenvio.textContent = "";
+      return;
+    }
+    pintar();
+  }, 1000);
+}
+
+async function solicitarCodigoVerificacion(boton) {
   limpiarError("error-paso-3");
   const email = document.getElementById("email-personal").value.trim();
 
@@ -247,9 +393,9 @@ btnEnviarCodigo.addEventListener("click", async () => {
 
   estado.emailPersonal = email;
 
-  btnEnviarCodigo.disabled = true;
-  const textoOriginalBoton = btnEnviarCodigo.textContent;
-  btnEnviarCodigo.textContent = "Enviando...";
+  boton.disabled = true;
+  const textoOriginalBoton = boton.textContent;
+  boton.textContent = "Enviando...";
   estadoEnvioCodigo.textContent = "";
   estadoEnvioCodigo.className = "estado-verificacion-email pendiente";
 
@@ -268,19 +414,29 @@ btnEnviarCodigo.addEventListener("click", async () => {
       estadoEnvioCodigo.textContent = "Listo, te enviamos un código de 6 dígitos a tu correo. Si no lo ves en unos minutos, revisa también la carpeta de spam o no deseado.";
       estadoEnvioCodigo.className = "estado-verificacion-email ok";
       bloqueCodigo.classList.remove("oculto");
+      btnEnviarCodigo.classList.add("oculto");
+      const espera = (resultado.data.esperaSegundos) || SEGUNDOS_ESPERA_REENVIO_CODIGO;
+      iniciarCooldownReenvio(espera);
     } else {
-      estadoEnvioCodigo.textContent = "Tu solicitud se registró, pero el sistema de envío de correos todavía no está activo en el servidor. Puedes continuar sin verificar tu correo por ahora; lo verificaremos más adelante.";
+      estadoEnvioCodigo.textContent = "Tu solicitud se registró, pero el sistema de envío de correos todavía no está activo en el servidor. Intenta de nuevo en un momento.";
       estadoEnvioCodigo.className = "estado-verificacion-email aviso";
     }
   } catch (error) {
     console.warn("No se pudo enviar el código de verificación todavía:", error);
-    estadoEnvioCodigo.textContent = "No pudimos conectar con el servidor para enviar el código. Puedes continuar e intentarlo más adelante.";
+    if (error && error.code === "functions/resource-exhausted") {
+      estadoEnvioCodigo.textContent = "Ya enviamos un código hace poco. Espera un momento antes de pedir otro.";
+    } else {
+      estadoEnvioCodigo.textContent = "No pudimos conectar con el servidor para enviar el código. Intenta de nuevo en un momento.";
+    }
     estadoEnvioCodigo.className = "estado-verificacion-email aviso";
   } finally {
-    btnEnviarCodigo.disabled = false;
-    btnEnviarCodigo.textContent = textoOriginalBoton;
+    boton.disabled = false;
+    boton.textContent = textoOriginalBoton;
   }
-});
+}
+
+btnEnviarCodigo.addEventListener("click", () => solicitarCodigoVerificacion(btnEnviarCodigo));
+btnReenviarCodigo.addEventListener("click", () => solicitarCodigoVerificacion(btnReenviarCodigo));
 
 btnVerificarCodigo.addEventListener("click", async () => {
   const codigo = document.getElementById("codigo-verificacion").value.trim();
@@ -302,96 +458,40 @@ btnVerificarCodigo.addEventListener("click", async () => {
       estado.emailVerificado = true;
       estadoVerificacionEmail.textContent = "¡Correo verificado correctamente!";
       estadoVerificacionEmail.className = "estado-verificacion-email ok";
+      btnSiguiente3.disabled = false;
+      if (intervaloReenvio) {
+        window.clearInterval(intervaloReenvio);
+        intervaloReenvio = null;
+      }
+      btnReenviarCodigo.classList.add("oculto");
+      contadorReenvio.classList.add("oculto");
     } else {
-      estadoVerificacionEmail.textContent = "El código no es correcto. Puedes intentar de nuevo o continuar; lo verificaremos más adelante.";
+      estadoVerificacionEmail.textContent = "El código no es correcto. Puedes intentar de nuevo o pedir uno nuevo.";
       estadoVerificacionEmail.className = "estado-verificacion-email aviso";
     }
   } catch (error) {
-    console.warn("verificarCodigoEmail no disponible todavía:", error);
-    estadoVerificacionEmail.textContent = "Esta función estará disponible próximamente. Puedes continuar sin problema.";
+    console.warn("Error verificando el código:", error);
+    estadoVerificacionEmail.textContent = "No pudimos verificar el código en este momento. Intenta de nuevo.";
     estadoVerificacionEmail.className = "estado-verificacion-email aviso";
   }
 });
 
-/* ---------------------- Paso 4: mapa Leaflet + Nominatim ---------------------- */
+/* ---------------------- Paso 4: estado y ciudad (Venezuela) ---------------------- */
 
-const COORD_INICIAL = { lat: 10.0678, lng: -69.3467 }; // Barquisimeto, referencia inicial
+const selectEstadoProvincia = document.getElementById("estado-provincia");
+const selectCiudad = document.getElementById("ciudad");
+const inputDireccionTexto = document.getElementById("direccion-texto");
+const contadorDireccion = document.getElementById("contador-direccion");
 
-const mapa = L.map("mapa").setView([COORD_INICIAL.lat, COORD_INICIAL.lng], 13);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution: '&copy; colaboradores de OpenStreetMap',
-  maxZoom: 19,
-}).addTo(mapa);
+poblarSelectEstados(selectEstadoProvincia, "Selecciona tu estado");
+poblarSelectCiudades(selectCiudad, "", "Selecciona primero tu estado");
 
-let marcador = null;
-const infoCoordenadas = document.getElementById("info-coordenadas");
-
-function colocarMarcador(lat, lng) {
-  estado.lat = lat;
-  estado.lng = lng;
-
-  if (marcador) {
-    marcador.setLatLng([lat, lng]);
-  } else {
-    marcador = L.marker([lat, lng], { draggable: true }).addTo(mapa);
-    marcador.on("dragend", (evento) => {
-      const posicion = evento.target.getLatLng();
-      estado.lat = posicion.lat;
-      estado.lng = posicion.lng;
-      actualizarInfoCoordenadas();
-    });
-  }
-  mapa.setView([lat, lng], 16);
-  actualizarInfoCoordenadas();
-}
-
-function actualizarInfoCoordenadas() {
-  infoCoordenadas.textContent = `Ubicación marcada: ${estado.lat.toFixed(5)}, ${estado.lng.toFixed(5)}. Puedes arrastrar el pin para ajustar.`;
-}
-
-mapa.on("click", (evento) => {
-  colocarMarcador(evento.latlng.lat, evento.latlng.lng);
+selectEstadoProvincia.addEventListener("change", () => {
+  poblarSelectCiudades(selectCiudad, selectEstadoProvincia.value, "Selecciona tu ciudad");
 });
 
-const inputBuscarDireccion = document.getElementById("buscar-direccion");
-const btnBuscarDireccion = document.getElementById("btn-buscar-direccion");
-
-async function buscarDireccion() {
-  const consulta = inputBuscarDireccion.value.trim();
-  if (!consulta) return;
-
-  btnBuscarDireccion.disabled = true;
-  const textoOriginal = btnBuscarDireccion.textContent;
-  btnBuscarDireccion.textContent = "Buscando...";
-
-  try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(consulta + ", Venezuela")}`;
-    const respuesta = await fetch(url, {
-      headers: { "Accept-Language": "es" },
-    });
-    const resultados = await respuesta.json();
-
-    if (resultados && resultados.length > 0) {
-      const primero = resultados[0];
-      colocarMarcador(parseFloat(primero.lat), parseFloat(primero.lon));
-    } else {
-      infoCoordenadas.textContent = "No encontramos esa dirección. Intenta con más detalle o marca el punto manualmente en el mapa.";
-    }
-  } catch (error) {
-    console.warn("Error buscando dirección en Nominatim:", error);
-    infoCoordenadas.textContent = "No se pudo buscar en este momento. Marca el punto manualmente tocando el mapa.";
-  } finally {
-    btnBuscarDireccion.disabled = false;
-    btnBuscarDireccion.textContent = textoOriginal;
-  }
-}
-
-btnBuscarDireccion.addEventListener("click", buscarDireccion);
-inputBuscarDireccion.addEventListener("keydown", (evento) => {
-  if (evento.key === "Enter") {
-    evento.preventDefault();
-    buscarDireccion();
-  }
+inputDireccionTexto.addEventListener("input", () => {
+  contadorDireccion.textContent = String(inputDireccionTexto.value.length);
 });
 
 /* ---------------------- Paso 5: fotos con vista previa ---------------------- */
@@ -428,6 +528,9 @@ function construirResumen() {
 
     <dt>Cédula</dt>
     <dd>${escaparTexto(estado.cedula)}</dd>
+
+    <dt>Edad</dt>
+    <dd>${escaparTexto(String(estado.edad != null ? estado.edad : ""))} años</dd>
 
     <dt>Tu WhatsApp</dt>
     <dd>${escaparTexto(estado.telefono)}</dd>
@@ -510,6 +613,8 @@ formVoluntario.addEventListener("submit", async (evento) => {
       cedula: estado.cedula.toUpperCase(),
       nombre: estado.nombre,
       apellido: estado.apellido,
+      fechaNacimiento: estado.fechaNacimiento,
+      edad: estado.edad,
       telefono: estado.telefono,
       telefonoEmergencia: estado.telefonoEmergencia,
       emailPersonal: estado.emailPersonal,
@@ -520,8 +625,6 @@ formVoluntario.addEventListener("submit", async (evento) => {
       ciudad: estado.ciudad,
       estadoProvincia: estado.estadoProvincia,
       direccionTexto: estado.direccionTexto,
-      lat: estado.lat,
-      lng: estado.lng,
       fotoRostroPath: `voluntarios/${uid}/rostro.jpg`,
       fotoCedulaPath: `voluntarios/${uid}/cedula.jpg`,
       fechaRegistro: serverTimestamp(),

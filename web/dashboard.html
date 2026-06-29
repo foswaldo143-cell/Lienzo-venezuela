@@ -32,6 +32,17 @@
   </div>
 
   <!-- ============================================================
+       Barra de perfil flotante: visible para CUALQUIER usuario ya
+       autenticado (voluntario, verificador o admin), en las tres vistas.
+       ============================================================ -->
+  <div class="barra-perfil-flotante oculto" id="barra-perfil">
+    <button type="button" class="boton-avatar-perfil" id="btn-abrir-perfil" aria-label="Mi perfil">
+      <img id="avatar-perfil-img" class="oculto" alt="">
+      <span id="avatar-perfil-inicial"></span>
+    </button>
+  </div>
+
+  <!-- ============================================================
        Vista 1: voluntario normal (no admin/verificador)
        Muestra el estado de su propia solicitud.
        ============================================================ -->
@@ -84,66 +95,97 @@
       </div>
     </div>
 
-    <div id="mensaje-panel" class="mensaje" role="status"></div>
+    <div class="panel-cuerpo">
 
-    <div class="estado-cargando" id="estado-cargando-lista">
-      <span class="cargando-spinner" style="border-top-color: var(--azul-profundo); border-color: rgba(27,58,92,0.2); border-top-color: var(--azul-profundo);"></span>
-      <p style="margin-top:var(--espacio-sm);">Cargando voluntarios pendientes...</p>
+      <!-- Menú lateral: solo visible para el rol "admin" (no verificador). -->
+      <nav class="panel-nav oculto" id="panel-nav">
+        <button type="button" class="panel-nav-item activo" data-seccion="pendientes">
+          Verificación de nuevos usuarios
+        </button>
+        <button type="button" class="panel-nav-item" data-seccion="todos">
+          Todos los usuarios registrados
+        </button>
+      </nav>
+
+      <div class="panel-contenido">
+
+        <!-- Sección: cola de revisión (pendientes) -->
+        <section id="seccion-pendientes">
+          <div id="mensaje-panel" class="mensaje" role="status"></div>
+
+          <div class="estado-cargando" id="estado-cargando-lista">
+            <span class="cargando-spinner" style="border-top-color: var(--azul-profundo); border-color: rgba(27,58,92,0.2); border-top-color: var(--azul-profundo);"></span>
+            <p style="margin-top:var(--espacio-sm);">Cargando voluntarios pendientes...</p>
+          </div>
+
+          <div class="estado-vacio oculto" id="estado-vacio-lista">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#1b3a5c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p style="font-weight:600; color:var(--texto-principal);">No hay voluntarios pendientes por ahora</p>
+            <p>Cuando alguien complete su registro, aparecerá aquí para tu revisión.</p>
+          </div>
+
+          <div class="lista-voluntarios" id="lista-voluntarios"></div>
+        </section>
+
+        <!-- Sección: todos los usuarios registrados (solo admin) -->
+        <section id="seccion-todos" class="oculto">
+          <div class="filtros-usuarios">
+            <input type="text" id="buscar-usuario" class="campo-busqueda-usuario" placeholder="Buscar por nombre, apellido o cédula...">
+            <select id="filtro-aprobacion">
+              <option value="todos">Todos los estados</option>
+              <option value="aprobado">Aprobados</option>
+              <option value="no_aprobado">No aprobados</option>
+            </select>
+          </div>
+
+          <div class="tabla-usuarios-contenedor">
+            <table class="tabla-usuarios">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th data-orden="nombreCompleto" class="th-ordenable">Nombre y apellido</th>
+                  <th data-orden="ciudad" class="th-ordenable">Ciudad</th>
+                  <th data-orden="estadoProvincia" class="th-ordenable">Estado</th>
+                  <th data-orden="edad" class="th-ordenable">Edad</th>
+                  <th data-orden="estadoVerificacion" class="th-ordenable">Aprobación</th>
+                </tr>
+              </thead>
+              <tbody id="cuerpo-tabla-usuarios"></tbody>
+            </table>
+          </div>
+          <p class="estado-vacio-tabla oculto" id="tabla-usuarios-vacia">No se encontraron usuarios con ese filtro.</p>
+        </section>
+
+      </div>
     </div>
-
-    <div class="estado-vacio oculto" id="estado-vacio-lista">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#1b3a5c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <p style="font-weight:600; color:var(--texto-principal);">No hay voluntarios pendientes por ahora</p>
-      <p>Cuando alguien complete su registro, aparecerá aquí para tu revisión.</p>
-    </div>
-
-    <div class="lista-voluntarios" id="lista-voluntarios"></div>
 
   </div>
 
 </main>
 
-<!-- Plantilla de tarjeta de voluntario (clonada por dashboard.js) -->
+<!-- Plantilla de tarjeta resumida de voluntario pendiente (clonada por dashboard.js) -->
 <template id="plantilla-tarjeta-voluntario">
-  <div class="tarjeta tarjeta-voluntario" data-uid="">
-    <div class="fotos-voluntario">
-      <div class="marco-foto">
-        <img class="foto-doc foto-rostro" alt="Foto de rostro" src="">
-        <span>Rostro</span>
-      </div>
-      <div class="marco-foto">
-        <img class="foto-doc foto-cedula" alt="Foto de cédula" src="">
-        <span>Cédula</span>
-      </div>
-    </div>
-    <div class="datos-voluntario">
+  <div class="tarjeta tarjeta-voluntario-resumen" data-uid="">
+    <img class="foto-doc foto-rostro-mini" alt="Foto de rostro" src="">
+    <div class="datos-resumen-voluntario">
       <h3 class="nombre-completo"></h3>
       <p class="subtitulo-cedula"></p>
-      <dl class="rejilla-datos">
-        <dt>Teléfono</dt><dd class="dato-telefono"></dd>
-        <dt>Tel. emergencia</dt><dd class="dato-telefono-emergencia"></dd>
-        <dt>Correo</dt><dd class="dato-correo"></dd>
-        <dt>Ubicación</dt><dd class="dato-ubicacion"></dd>
-        <dt>Dirección</dt><dd class="dato-direccion"></dd>
-        <dt>Registrado</dt><dd class="dato-fecha"></dd>
-      </dl>
       <span class="insignia-email-verificado dato-insignia-email"></span>
-      <p class="mensaje-tarjeta oculto"></p>
-      <div class="panel-rechazo">
-        <label>Motivo del rechazo (se enviará al voluntario por correo)</label>
-        <textarea class="campo-motivo-rechazo" placeholder="Ej: la foto del documento no es legible, por favor vuelve a intentarlo."></textarea>
-      </div>
     </div>
-    <div class="acciones-voluntario">
-      <button type="button" class="boton boton-aprobar btn-aprobar">Aprobar</button>
-      <button type="button" class="boton boton-rechazar btn-rechazar">Rechazar</button>
-      <button type="button" class="boton boton-rechazar btn-confirmar-rechazo oculto">Confirmar rechazo</button>
-      <button type="button" class="boton boton-texto btn-cancelar-rechazo oculto">Cancelar</button>
-    </div>
+    <button type="button" class="boton boton-primario btn-ver-revision">Ver</button>
   </div>
 </template>
+
+<!-- Modal genérico (revisión / usuario / perfil): el contenido interno lo
+     construye dashboard.js según el caso. -->
+<div class="overlay-modal oculto" id="overlay-modal">
+  <div class="modal-caja" id="modal-caja">
+    <button type="button" class="modal-cerrar" id="btn-cerrar-modal" aria-label="Cerrar">&times;</button>
+    <div id="modal-contenido"></div>
+  </div>
+</div>
 
 <script src="js/firebase-config.js"></script>
 <script type="module" src="js/dashboard.js"></script>

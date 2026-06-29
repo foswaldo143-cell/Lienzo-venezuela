@@ -7,6 +7,7 @@
 import { auth, db, DOMINIO_AUTH_SINTETICO } from "./firebase-init.js";
 import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-functions.js";
 
 const formLogin = document.getElementById("form-login");
 const cedulaTipo = document.getElementById("cedula-tipo");
@@ -75,7 +76,11 @@ formLogin.addEventListener("submit", async (evento) => {
 
   } catch (error) {
     console.error("Error de inicio de sesión:", error);
-    mostrarError("No pudimos iniciar tu sesión. Revisa tu cédula y contraseña e intenta de nuevo.");
+    if (error && error.code === "auth/user-disabled") {
+      mostrarError("Tu cuenta fue inhabilitada por un coordinador de Lienzo. Si crees que esto es un error, contáctanos.");
+    } else {
+      mostrarError("No pudimos iniciar tu sesión. Revisa tu cédula y contraseña e intenta de nuevo.");
+    }
   } finally {
     ponerCargando(false);
   }
@@ -84,4 +89,76 @@ formLogin.addEventListener("submit", async (evento) => {
 // Solo permitir dígitos en el campo de cédula mientras se escribe.
 cedulaNumero.addEventListener("input", () => {
   cedulaNumero.value = cedulaNumero.value.replace(/\D/g, "");
+});
+
+/* ---------------------- Recuperación de contraseña ---------------------- */
+
+const btnMostrarRecuperacion = document.getElementById("btn-mostrar-recuperacion");
+const panelRecuperacion = document.getElementById("panel-recuperacion");
+const cedulaTipoRecuperacion = document.getElementById("cedula-tipo-recuperacion");
+const cedulaNumeroRecuperacion = document.getElementById("cedula-numero-recuperacion");
+const mensajeRecuperacion = document.getElementById("mensaje-recuperacion");
+const btnCancelarRecuperacion = document.getElementById("btn-cancelar-recuperacion");
+const btnEnviarRecuperacion = document.getElementById("btn-enviar-recuperacion");
+const textoBtnRecuperacion = document.getElementById("texto-btn-recuperacion");
+
+function mostrarMensajeRecuperacion(texto, tipo) {
+  mensajeRecuperacion.textContent = texto;
+  mensajeRecuperacion.className = `mensaje mensaje-${tipo} visible`;
+}
+
+btnMostrarRecuperacion.addEventListener("click", () => {
+  panelRecuperacion.classList.remove("oculto");
+  btnMostrarRecuperacion.classList.add("oculto");
+  mensajeRecuperacion.className = "mensaje";
+  mensajeRecuperacion.textContent = "";
+});
+
+btnCancelarRecuperacion.addEventListener("click", () => {
+  panelRecuperacion.classList.add("oculto");
+  btnMostrarRecuperacion.classList.remove("oculto");
+  cedulaNumeroRecuperacion.value = "";
+  mensajeRecuperacion.className = "mensaje";
+  mensajeRecuperacion.textContent = "";
+});
+
+cedulaNumeroRecuperacion.addEventListener("input", () => {
+  cedulaNumeroRecuperacion.value = cedulaNumeroRecuperacion.value.replace(/\D/g, "");
+});
+
+btnEnviarRecuperacion.addEventListener("click", async () => {
+  const numero = cedulaNumeroRecuperacion.value.trim();
+  if (!numero) {
+    mostrarMensajeRecuperacion("Escribe tu número de cédula.", "error");
+    return;
+  }
+  const cedulaCompleta = cedulaTipoRecuperacion.value + numero;
+
+  btnEnviarRecuperacion.disabled = true;
+  const textoOriginal = textoBtnRecuperacion.textContent;
+  textoBtnRecuperacion.innerHTML = '<span class="cargando-spinner"></span> Enviando...';
+
+  try {
+    const functions = getFunctions();
+    const solicitarRecuperacionPassword = httpsCallable(functions, "solicitarRecuperacionPassword");
+    const resultado = await solicitarRecuperacionPassword({ cedula: cedulaCompleta });
+
+    if (resultado && resultado.data && resultado.data.ok) {
+      mostrarMensajeRecuperacion(
+        resultado.data.mensaje || "Listo, te enviamos una nueva contraseña a tu correo registrado.",
+        "exito"
+      );
+    } else {
+      mostrarMensajeRecuperacion(
+        (resultado && resultado.data && resultado.data.mensaje) || "No pudimos procesar tu solicitud.",
+        "error"
+      );
+    }
+  } catch (error) {
+    console.error("Error en solicitarRecuperacionPassword:", error);
+    mostrarMensajeRecuperacion("No pudimos conectar con el servidor. Intenta de nuevo en un momento.", "error");
+  } finally {
+    btnEnviarRecuperacion.disabled = false;
+    textoBtnRecuperacion.textContent = textoOriginal;
+  }
 });

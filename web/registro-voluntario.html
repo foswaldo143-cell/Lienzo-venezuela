@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
 <title>Red Lienzo — Registro de Voluntario</title>
 <link rel="stylesheet" href="css/styles.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
 <div class="franja-superior"></div>
@@ -49,10 +48,20 @@
           <p class="ayuda-campo">Solo números, sin puntos ni guiones.</p>
         </div>
 
+        <div class="campo">
+          <label for="fecha-nacimiento">Fecha de nacimiento</label>
+          <input type="date" id="fecha-nacimiento" required>
+          <p class="ayuda-campo" id="edad-calculada"></p>
+        </div>
+
+        <div id="aviso-menor-edad" class="mensaje mensaje-error oculto"></div>
+
         <div id="error-paso-1" class="mensaje mensaje-error"></div>
 
         <div class="grupo-botones">
-          <button type="button" class="boton-primario" data-siguiente="2">Siguiente</button>
+          <button type="button" class="boton-primario" data-siguiente="2" id="btn-siguiente-1">
+            <span id="texto-btn-siguiente-1">Siguiente</span>
+          </button>
         </div>
       </section>
 
@@ -113,72 +122,41 @@
           </div>
           <p class="ayuda-campo">Escribe aquí el código de 6 dígitos que te llegó por correo.</p>
           <p class="estado-verificacion-email pendiente" id="estado-verificacion-email"></p>
+          <button type="button" class="boton-texto oculto" id="btn-reenviar-codigo">Reenviar código</button>
+          <p class="ayuda-campo oculto" id="contador-reenvio"></p>
         </div>
 
         <p class="ayuda-campo">
-          Puedes verificar tu correo ahora o continuar sin verificarlo; lo confirmaremos más adelante.
+          Necesitamos verificar tu correo antes de continuar: así puedes recibir tu usuario, contraseña y carnet cuando seas aprobado(a).
         </p>
 
         <div id="error-paso-3" class="mensaje mensaje-error"></div>
 
         <div class="grupo-botones">
           <button type="button" class="boton-secundario" data-anterior="2">Atrás</button>
-          <button type="button" class="boton-primario" data-siguiente="4">Siguiente</button>
+          <button type="button" class="boton-primario" data-siguiente="4" id="btn-siguiente-3" disabled>Siguiente</button>
         </div>
       </section>
 
       <!-- ===================== PASO 4: Dirección ===================== -->
       <section class="paso" id="paso-4" data-paso="4">
         <h2>¿Dónde vives?</h2>
-        <p class="descripcion-paso">Busca tu dirección o mueve el pin en el mapa hasta el lugar correcto.</p>
-
-        <div class="buscador-direccion">
-          <input type="text" id="buscar-direccion" placeholder="Escribe tu dirección o sector">
-          <button type="button" class="boton-secundario" id="btn-buscar-direccion">Buscar</button>
-        </div>
-
-        <div id="mapa"></div>
-        <p class="coordenadas-info" id="info-coordenadas">Toca el mapa o busca tu dirección para marcar el punto exacto.</p>
-
-        <div class="campo">
-          <label for="ciudad">Ciudad</label>
-          <input type="text" id="ciudad" placeholder="Ej: Barquisimeto" required>
-        </div>
+        <p class="descripcion-paso">Selecciona tu estado y ciudad, y escribe tu dirección.</p>
 
         <div class="campo">
           <label for="estado-provincia">Estado</label>
-          <select id="estado-provincia" required>
-            <option value="">Selecciona tu estado</option>
-            <option>Amazonas</option>
-            <option>Anzoátegui</option>
-            <option>Apure</option>
-            <option>Aragua</option>
-            <option>Barinas</option>
-            <option>Bolívar</option>
-            <option>Carabobo</option>
-            <option>Cojedes</option>
-            <option>Delta Amacuro</option>
-            <option>Distrito Capital</option>
-            <option>Falcón</option>
-            <option>Guárico</option>
-            <option>Lara</option>
-            <option>Mérida</option>
-            <option>Miranda</option>
-            <option>Monagas</option>
-            <option>Nueva Esparta</option>
-            <option>Portuguesa</option>
-            <option>Sucre</option>
-            <option>Táchira</option>
-            <option>Trujillo</option>
-            <option>La Guaira</option>
-            <option>Yaracuy</option>
-            <option>Zulia</option>
-          </select>
+          <select id="estado-provincia" required></select>
         </div>
 
         <div class="campo">
-          <label for="direccion-texto">Dirección detallada</label>
-          <textarea id="direccion-texto" placeholder="Calle, casa/edificio, sector, punto de referencia..." required></textarea>
+          <label for="ciudad">Ciudad</label>
+          <select id="ciudad" required disabled></select>
+        </div>
+
+        <div class="campo">
+          <label for="direccion-texto">Dirección</label>
+          <input type="text" id="direccion-texto" maxlength="50" placeholder="Calle, casa/edificio, sector..." required>
+          <p class="ayuda-campo"><span id="contador-direccion">0</span>/50 caracteres</p>
         </div>
 
         <div id="error-paso-4" class="mensaje mensaje-error"></div>
@@ -268,7 +246,6 @@
   </div>
 </main>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="js/firebase-config.js"></script>
 <script type="module" src="js/registro-voluntario.js"></script>
 </body>
