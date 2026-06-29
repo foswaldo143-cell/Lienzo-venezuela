@@ -880,6 +880,23 @@ function exigirRolAdmin(context) {
 }
 
 /**
+ * Igual que exigirRolAdmin, pero tambien acepta el rol "verificador". Se usa
+ * para acciones de revision (aprobar/rechazar voluntarios) que segun
+ * ARQUITECTURA.md puede realizar un admin O un verificador, a diferencia de
+ * la gestion de roles (asignarRolAdmin/asignarRolVerificador) que es
+ * exclusiva de admin.
+ */
+function exigirRolAdminOVerificador(context) {
+  const rol = context.auth && context.auth.token && context.auth.token.role;
+  if (rol !== 'admin' && rol !== 'verificador') {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'Solo un administrador o verificador puede realizar esta accion.'
+    );
+  }
+}
+
+/**
  * asignarRolAdmin: otorga el custom claim role: 'admin' a un uid indicado.
  * Solo puede ser invocada por alguien que YA es admin (ver bootstrapAdmin.js
  * para como se crea el primer admin, ya que este es justamente el problema
@@ -929,4 +946,83 @@ exports.asignarRolVerificador = functions.https.onCall(async (data, context) => 
   });
 
   return { ok: true, uid: uidObjetivo, role: 'verificador' };
+});
+
+// ------------------------------------------------------------------------------
+// g) revisarVoluntario (callable, admin o verificador) — panel de administracion
+// ------------------------------------------------------------------------------
+/**
+ * Permite que un admin/verificador, desde el panel (dashboard.html), apruebe
+ * o rechace MANUALMENTE el registro de un voluntario que quedo en
+ * "pendiente_manual" (o "pendiente_ia") tras enviarParaVerificacion.
+ *
+ * Reutiliza exactamente la misma logica de aprobarVoluntario/rechazarVoluntario
+ * que usa el flujo automatico con IA, por lo que el resultado es identico:
+ * se crea/actualiza la cuenta de Auth con una contrasena real, se genera el
+ * carnet con QR y se envia todo por correo al voluntario (si se aprueba), o
+ * se le notifica el rechazo con su motivo (si se rechaza).
+ *
+ * Es importante que esto sea una Cloud Function (y no una simple escritura
+ * de Firestore desde el cliente): aunque las reglas de Firestore SI permiten
+ * que un admin/verificador edite el campo "estado" directamente, solo el
+ * Admin SDK (aqui) puede crear la cuenta de Auth con password real, generar
+ * el QR y enviar los correos. Una edicion directa del documento nunca
+ * dispararia nada de eso.
+ */
+exports.revisarVoluntario = functions.https.onCall(async (data, context) => {
+  exigirRolAdminOVerificador(context);
+
+  const uid = data && data.uid;
+  const decision = data && data.decision; // 'aprobado' | 'rechazado'
+  const motivoRechazo = (data && data.motivoRechazo) || null;
+
+  if (!uid) {
+    throw new functions.https.HttpsError('invalid-argument', 'Debes indicar el uid del voluntario a revisar.');
+  }
+  if (decision !== 'aprobado' && decision !== 'rechazado') {
+    throw new functions.https.HttpsError('invalid-argument', 'decision debe ser "aprobado" o "rechazado".');
+  }
+
+  const refUsuario = db.collection('usuarios').doc(uid);
+  const snapUsuario = await refUsuario.get();
+  if (!snapUsuario.exists) {
+    throw new functions.https.HttpsError('not-found', 'No se encontro el perfil indicado.');
+  }
+
+  const usuarioActual = snapUsuario.data();
+  if (usuarioActual.estadoVerificacion === 'aprobado' || usuarioActual.estadoVerificacion === 'rechazado') {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      `Este voluntario ya fue revisado anteriormente (estado actual: ${usuarioActual.estadoVerificacion}).`
+    );
+  }
+
+  // Auditoria en verificaciones/{uid}, igual que hace enviarParaVerificacion
+  // para el flujo automatico, dejando constancia de quien decidio.
+  await db.collection('verificaciones').doc(uid).set({
+    metodo: 'manual',
+    resultadoBruto: `Revision manual desde el panel por uid ${context.auth.uid} (rol: ${context.auth.token.role}).`,
+    confianza: null,
+    decision,
+    revisadoPor: context.auth.uid,
+    fecha: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Mismos campos que actualiza enviarParaVerificacion antes de disparar la
+  // accion correspondiente (mantener consistencia entre ambos flujos).
+  await refUsuario.update({
+    estadoVerificacion: decision,
+    confianzaIA: null,
+    fechaVerificacion: admin.firestore.FieldValue.serverTimestamp(),
+    motivoRechazo: decision === 'rechazado' ? (motivoRechazo || 'No se pudieron verificar correctamente los datos proporcionados.') : null,
+    verificadoPor: context.auth.uid,
+  });
+
+  if (decision === 'aprobado') {
+    await aprobarVoluntario(uid);
+    return { ok: true, estado: 'aprobado', mensaje: 'Voluntario aprobado. Se le envio un correo con sus credenciales y carnet.' };
+  }
+
+  await rechazarVoluntario(uid, motivoRechazo);
+  return { ok: true, estado: 'rechazado', mensaje: 'Voluntario rechazado. Se le notifico el motivo por correo.' };
 });

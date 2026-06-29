@@ -3,13 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
-<title>Red Lienzo — Bienvenido</title>
+<title>Red Lienzo — Panel</title>
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 <div class="franja-superior"></div>
 <main class="pantalla">
-  <div class="contenedor">
+
+  <!-- ============================================================
+       Estado: verificando sesión / rol (siempre se muestra primero)
+       ============================================================ -->
+  <div class="contenedor" id="vista-cargando">
     <div class="encabezado-marca">
       <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo Red Lienzo">
         <circle cx="50" cy="50" r="48" fill="#1b3a5c"/>
@@ -22,13 +26,126 @@
       <h1>Red Lienzo</h1>
     </div>
     <div class="tarjeta" style="text-align:center;">
-      <h2 style="color:var(--azul-profundo); font-size: var(--texto-xl);">Bienvenido</h2>
-      <p style="color:var(--texto-secundario); font-size: var(--texto-lg);">
-        Esta sección está en construcción. Muy pronto podrás ver aquí el estado de tu solicitud
-        y, si eres aprobado, la información de tu centro de cuidado asignado.
-      </p>
+      <span class="cargando-spinner" style="border-top-color: var(--azul-profundo); border-color: rgba(27,58,92,0.2); border-top-color: var(--azul-profundo);"></span>
+      <p style="margin-top:var(--espacio-sm); color:var(--texto-secundario);">Verificando tu sesión...</p>
     </div>
   </div>
+
+  <!-- ============================================================
+       Vista 1: voluntario normal (no admin/verificador)
+       Muestra el estado de su propia solicitud.
+       ============================================================ -->
+  <div class="contenedor oculto" id="vista-voluntario">
+    <div class="encabezado-marca">
+      <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo Red Lienzo">
+        <circle cx="50" cy="50" r="48" fill="#1b3a5c"/>
+        <path d="M50 18 C 33 18, 20 31, 20 47 C 20 62, 33 74, 48 80 C 49 80.5, 51 80.5, 52 80 C 67 74, 80 62, 80 47 C 80 31, 67 18, 50 18 Z"
+              fill="none" stroke="#ffffff" stroke-width="3.2"/>
+        <circle cx="40" cy="46" r="6.5" fill="#c1672b"/>
+        <circle cx="60" cy="46" r="6.5" fill="#ffffff"/>
+        <path d="M30 58 C 38 66, 62 66, 70 58" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </svg>
+      <h1>Red Lienzo</h1>
+    </div>
+
+    <div class="tarjeta estado-revision-voluntario" id="tarjeta-estado-voluntario">
+      <!-- Contenido inyectado por dashboard.js según estadoVerificacion -->
+    </div>
+
+    <div class="pie-secundario">
+      <button type="button" class="boton boton-texto" id="btn-cerrar-sesion-voluntario">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       Vista 2: admin / verificador — panel de revisión de voluntarios
+       ============================================================ -->
+  <div class="contenedor contenedor-panel oculto" id="vista-admin">
+
+    <div class="encabezado-panel">
+      <div class="titulo-marca-panel" style="display:flex; align-items:center; gap:var(--espacio-sm);">
+        <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo Red Lienzo" style="width:48px; height:48px; margin-bottom:0;">
+          <circle cx="50" cy="50" r="48" fill="#1b3a5c"/>
+          <path d="M50 18 C 33 18, 20 31, 20 47 C 20 62, 33 74, 48 80 C 49 80.5, 51 80.5, 52 80 C 67 74, 80 62, 80 47 C 80 31, 67 18, 50 18 Z"
+                fill="none" stroke="#ffffff" stroke-width="3.2"/>
+          <circle cx="40" cy="46" r="6.5" fill="#c1672b"/>
+          <circle cx="60" cy="46" r="6.5" fill="#ffffff"/>
+          <path d="M30 58 C 38 66, 62 66, 70 58" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div class="titulo-panel">
+          <h2>Panel de revisión</h2>
+          <p>Voluntarios pendientes de aprobación</p>
+          <span class="insignia-rol" id="insignia-rol">Admin</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:var(--espacio-sm);">
+        <span class="contador-pendientes" id="contador-pendientes">0 pendientes</span>
+        <button type="button" class="boton boton-cerrar-sesion" id="btn-cerrar-sesion-admin">Cerrar sesión</button>
+      </div>
+    </div>
+
+    <div id="mensaje-panel" class="mensaje" role="status"></div>
+
+    <div class="estado-cargando" id="estado-cargando-lista">
+      <span class="cargando-spinner" style="border-top-color: var(--azul-profundo); border-color: rgba(27,58,92,0.2); border-top-color: var(--azul-profundo);"></span>
+      <p style="margin-top:var(--espacio-sm);">Cargando voluntarios pendientes...</p>
+    </div>
+
+    <div class="estado-vacio oculto" id="estado-vacio-lista">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#1b3a5c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <p style="font-weight:600; color:var(--texto-principal);">No hay voluntarios pendientes por ahora</p>
+      <p>Cuando alguien complete su registro, aparecerá aquí para tu revisión.</p>
+    </div>
+
+    <div class="lista-voluntarios" id="lista-voluntarios"></div>
+
+  </div>
+
 </main>
+
+<!-- Plantilla de tarjeta de voluntario (clonada por dashboard.js) -->
+<template id="plantilla-tarjeta-voluntario">
+  <div class="tarjeta tarjeta-voluntario" data-uid="">
+    <div class="fotos-voluntario">
+      <div class="marco-foto">
+        <img class="foto-doc foto-rostro" alt="Foto de rostro" src="">
+        <span>Rostro</span>
+      </div>
+      <div class="marco-foto">
+        <img class="foto-doc foto-cedula" alt="Foto de cédula" src="">
+        <span>Cédula</span>
+      </div>
+    </div>
+    <div class="datos-voluntario">
+      <h3 class="nombre-completo"></h3>
+      <p class="subtitulo-cedula"></p>
+      <dl class="rejilla-datos">
+        <dt>Teléfono</dt><dd class="dato-telefono"></dd>
+        <dt>Tel. emergencia</dt><dd class="dato-telefono-emergencia"></dd>
+        <dt>Correo</dt><dd class="dato-correo"></dd>
+        <dt>Ubicación</dt><dd class="dato-ubicacion"></dd>
+        <dt>Dirección</dt><dd class="dato-direccion"></dd>
+        <dt>Registrado</dt><dd class="dato-fecha"></dd>
+      </dl>
+      <span class="insignia-email-verificado dato-insignia-email"></span>
+      <p class="mensaje-tarjeta oculto"></p>
+      <div class="panel-rechazo">
+        <label>Motivo del rechazo (se enviará al voluntario por correo)</label>
+        <textarea class="campo-motivo-rechazo" placeholder="Ej: la foto del documento no es legible, por favor vuelve a intentarlo."></textarea>
+      </div>
+    </div>
+    <div class="acciones-voluntario">
+      <button type="button" class="boton boton-aprobar btn-aprobar">Aprobar</button>
+      <button type="button" class="boton boton-rechazar btn-rechazar">Rechazar</button>
+      <button type="button" class="boton boton-rechazar btn-confirmar-rechazo oculto">Confirmar rechazo</button>
+      <button type="button" class="boton boton-texto btn-cancelar-rechazo oculto">Cancelar</button>
+    </div>
+  </div>
+</template>
+
+<script src="js/firebase-config.js"></script>
+<script type="module" src="js/dashboard.js"></script>
 </body>
 </html>
