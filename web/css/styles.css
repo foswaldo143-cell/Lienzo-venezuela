@@ -971,3 +971,482 @@ input[type="file"] {
   font-weight: 600;
   min-height: 18px;
 }
+
+/* =========================================================
+   Barra de perfil flotante (visible en las tres vistas)
+   ========================================================= */
+
+.barra-perfil-flotante {
+  position: fixed;
+  top: var(--espacio-md);
+  right: var(--espacio-md);
+  z-index: 40;
+}
+
+.boton-avatar-perfil {
+  width: 48px;
+  height: 48px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--azul-profundo);
+  color: var(--blanco);
+  border: 2px solid var(--blanco);
+  box-shadow: var(--sombra);
+  overflow: hidden;
+  font-size: var(--texto-lg);
+  font-weight: 700;
+}
+
+.boton-avatar-perfil:hover {
+  background: var(--azul-profundo-oscuro);
+  transform: translateY(-1px);
+}
+
+.boton-avatar-perfil img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-modal-perfil {
+  width: 84px;
+  height: 84px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--azul-profundo);
+  color: var(--blanco);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  overflow: hidden;
+  border: 3px solid var(--azul-claro);
+}
+
+.avatar-modal-perfil img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.boton-cambiar-foto {
+  display: inline-flex;
+  width: auto;
+  min-height: 38px;
+  padding: 0 var(--espacio-md);
+  font-size: 14px;
+}
+
+/* =========================================================
+   Cuerpo del panel: menú lateral + contenido
+   ========================================================= */
+
+.panel-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-md);
+}
+
+.panel-nav {
+  display: flex;
+  gap: var(--espacio-xs);
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.panel-nav-item {
+  width: auto;
+  white-space: nowrap;
+  background: var(--blanco);
+  color: var(--texto-secundario);
+  border: 2px solid var(--borde);
+  font-size: 14px;
+  min-height: 42px;
+  padding: 0 var(--espacio-md);
+}
+
+.panel-nav-item:hover {
+  border-color: var(--azul-claro);
+  color: var(--azul-profundo);
+}
+
+.panel-nav-item.activo {
+  background: var(--azul-profundo);
+  border-color: var(--azul-profundo);
+  color: var(--blanco);
+}
+
+.panel-contenido {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (min-width: 860px) {
+  .panel-cuerpo {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .panel-nav {
+    flex-direction: column;
+    flex: 0 0 240px;
+    overflow-x: visible;
+  }
+
+  .panel-nav-item {
+    text-align: left;
+    justify-content: flex-start;
+  }
+}
+
+/* =========================================================
+   Tarjeta resumida de voluntario pendiente (cola de revisión)
+   ========================================================= */
+
+.tarjeta-voluntario-resumen {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-md);
+  padding: var(--espacio-sm) var(--espacio-md);
+}
+
+.foto-rostro-mini {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--azul-claro);
+  border: 2px solid var(--borde);
+  flex: 0 0 auto;
+}
+
+.datos-resumen-voluntario {
+  flex: 1;
+  min-width: 0;
+}
+
+.datos-resumen-voluntario .nombre-completo {
+  font-size: var(--texto-base);
+  color: var(--texto-principal);
+  font-weight: 700;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.datos-resumen-voluntario .subtitulo-cedula {
+  font-size: 13px;
+  color: var(--texto-secundario);
+  margin-bottom: 4px;
+}
+
+.insignia-email-verificado {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.insignia-email-verificado.ok {
+  background: var(--exito-fondo);
+  color: var(--exito);
+}
+
+.insignia-email-verificado.aviso {
+  background: var(--acento-suave);
+  color: var(--acento-oscuro);
+}
+
+.btn-ver-revision {
+  width: auto;
+  min-height: 40px;
+  padding: 0 var(--espacio-lg);
+  flex: 0 0 auto;
+}
+
+/* =========================================================
+   Sección "Todos los usuarios": filtros + tabla
+   ========================================================= */
+
+.filtros-usuarios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-sm);
+  margin-bottom: var(--espacio-md);
+}
+
+.campo-busqueda-usuario {
+  flex: 1;
+  min-width: 200px;
+  font-family: var(--fuente);
+  font-size: var(--texto-base);
+  min-height: var(--alto-tactil);
+  padding: 0 var(--espacio-sm);
+  border-radius: var(--radio-sm);
+  border: 2px solid var(--borde);
+  background: var(--blanco);
+  color: var(--texto-principal);
+}
+
+.campo-busqueda-usuario:focus {
+  outline: none;
+  border-color: var(--foco);
+}
+
+#filtro-aprobacion {
+  font-family: var(--fuente);
+  font-size: var(--texto-base);
+  min-height: var(--alto-tactil);
+  padding: 0 var(--espacio-sm);
+  border-radius: var(--radio-sm);
+  border: 2px solid var(--borde);
+  background: var(--blanco);
+  color: var(--texto-principal);
+}
+
+.tabla-usuarios-contenedor {
+  overflow-x: auto;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--blanco);
+}
+
+.tabla-usuarios {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 560px;
+}
+
+.tabla-usuarios thead th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--texto-secundario);
+  background: var(--hueso);
+  padding: var(--espacio-sm) var(--espacio-sm);
+  border-bottom: 2px solid var(--borde);
+  white-space: nowrap;
+}
+
+.th-ordenable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.th-ordenable:hover {
+  color: var(--azul-profundo);
+}
+
+.th-ordenable::after {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 5px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  opacity: 0.35;
+}
+
+.th-ordenable.orden-asc::after {
+  border-bottom: 5px solid var(--azul-profundo);
+  opacity: 1;
+}
+
+.th-ordenable.orden-desc::after {
+  border-top: 5px solid var(--azul-profundo);
+  opacity: 1;
+}
+
+.tabla-usuarios tbody td {
+  padding: var(--espacio-sm);
+  border-bottom: 1px solid var(--borde);
+  color: var(--texto-principal);
+  vertical-align: middle;
+}
+
+.fila-usuario-tabla {
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.fila-usuario-tabla:hover {
+  background: var(--azul-claro);
+}
+
+.fila-usuario-tabla:last-child td {
+  border-bottom: none;
+}
+
+.foto-fila-mini {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--azul-claro);
+  border: 1px solid var(--borde);
+  display: block;
+}
+
+.insignia-aprobacion {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.insignia-aprobacion.ok {
+  background: var(--exito-fondo);
+  color: var(--exito);
+}
+
+.insignia-aprobacion.error {
+  background: var(--error-fondo);
+  color: var(--error);
+}
+
+.insignia-aprobacion.pendiente {
+  background: var(--acento-suave);
+  color: var(--acento-oscuro);
+}
+
+.insignia-aprobacion.aviso {
+  background: #fdf0d5;
+  color: #9c6b14;
+}
+
+.estado-vacio-tabla {
+  text-align: center;
+  color: var(--texto-secundario);
+  padding: var(--espacio-lg) var(--espacio-md);
+}
+
+/* =========================================================
+   Modal genérico (overlay-modal / modal-caja)
+   ========================================================= */
+
+.overlay-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 30, 40, 0.55);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+  padding: 0;
+}
+
+.modal-caja {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: var(--blanco);
+  border-radius: var(--radio) var(--radio) 0 0;
+  padding: var(--espacio-lg) var(--espacio-md) var(--espacio-xl);
+  box-shadow: var(--sombra-fuerte);
+  animation: subir-modal 0.18s ease-out;
+}
+
+@keyframes subir-modal {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-cerrar {
+  position: absolute;
+  top: var(--espacio-sm);
+  right: var(--espacio-sm);
+  width: 36px;
+  height: 36px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--hueso);
+  color: var(--texto-secundario);
+  font-size: 22px;
+  line-height: 1;
+  z-index: 1;
+}
+
+.modal-cerrar:hover {
+  background: var(--azul-claro);
+  color: var(--azul-profundo);
+}
+
+@media (min-width: 640px) {
+  .overlay-modal {
+    align-items: center;
+    padding: var(--espacio-md);
+  }
+
+  .modal-caja {
+    border-radius: var(--radio);
+  }
+}
+
+/* ---------- Contenido del modal de revisión ---------- */
+
+.galeria-revision {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-sm);
+  margin-bottom: var(--espacio-md);
+}
+
+.galeria-revision figure {
+  margin: 0;
+}
+
+.galeria-revision figcaption {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--texto-secundario);
+  margin-bottom: 4px;
+}
+
+.foto-revision-grande {
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  background: var(--hueso);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-sm);
+  display: block;
+}
+
+@media (min-width: 640px) {
+  .galeria-revision {
+    flex-direction: row;
+  }
+
+  .galeria-revision figure {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* ---------- Contenido del modal de gestión de usuario ---------- */
+
+.grupo-botones-modal-usuario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-sm);
+  margin-top: var(--espacio-md);
+}
+
+.grupo-botones-modal-usuario .boton {
+  width: 100%;
+}
