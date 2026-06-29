@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<title>Red Lienzo — Registro de Voluntario</title>
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+<div class="franja-superior"></div>
+
+<div class="barra-progreso-contenedor">
+  <p class="barra-progreso-texto" id="texto-paso">Paso 1 de 6</p>
+  <div class="barra-progreso-pista">
+    <div class="barra-progreso-relleno" id="relleno-progreso" style="width: 16.6%;"></div>
+  </div>
+</div>
+
+<main class="pantalla">
+  <div class="contenedor">
+
+    <form id="form-voluntario" novalidate>
+
+      <!-- ===================== PASO 1: Datos personales ===================== -->
+      <section class="paso activo" id="paso-1" data-paso="1">
+        <h2>Tus datos</h2>
+        <p class="descripcion-paso">Empecemos con lo básico. Escribe tu nombre tal como aparece en tu cédula.</p>
+
+        <div class="campo">
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" autocomplete="given-name" required>
+        </div>
+
+        <div class="campo">
+          <label for="apellido">Apellido</label>
+          <input type="text" id="apellido" autocomplete="family-name" required>
+        </div>
+
+        <div class="campo">
+          <label for="cedula-numero-reg">Cédula</label>
+          <div class="fila-cedula">
+            <select id="cedula-tipo-reg" aria-label="Tipo de cédula">
+              <option value="V">V</option>
+              <option value="E">E</option>
+            </select>
+            <input type="text" id="cedula-numero-reg" inputmode="numeric" placeholder="12345678" required>
+          </div>
+          <p class="ayuda-campo">Solo números, sin puntos ni guiones.</p>
+        </div>
+
+        <div id="error-paso-1" class="mensaje mensaje-error"></div>
+
+        <div class="grupo-botones">
+          <button type="button" class="boton-primario" data-siguiente="2">Siguiente</button>
+        </div>
+      </section>
+
+      <!-- ===================== PASO 2: Teléfonos ===================== -->
+      <section class="paso" id="paso-2" data-paso="2">
+        <h2>Teléfonos de contacto</h2>
+        <p class="descripcion-paso">Usaremos estos números por WhatsApp para coordinar contigo.</p>
+
+        <div class="campo">
+          <label for="telefono">Tu número de WhatsApp</label>
+          <div class="fila-telefono">
+            <span class="prefijo-telefono">+58</span>
+            <input type="tel" id="telefono" inputmode="numeric" placeholder="4121234567" maxlength="10" required>
+          </div>
+          <p class="ayuda-campo">Escribe los 10 dígitos después del +58, sin espacios.</p>
+        </div>
+
+        <div class="campo">
+          <label for="telefono-emergencia">Persona a contactar si te pasa algo a ti</label>
+          <div class="fila-telefono">
+            <span class="prefijo-telefono">+58</span>
+            <input type="tel" id="telefono-emergencia" inputmode="numeric" placeholder="4121234567" maxlength="10" required>
+          </div>
+          <p class="ayuda-campo">Número de un familiar o persona de confianza, por si ocurre una emergencia.</p>
+        </div>
+
+        <div id="error-paso-2" class="mensaje mensaje-error"></div>
+
+        <div class="grupo-botones">
+          <button type="button" class="boton-secundario" data-anterior="1">Atrás</button>
+          <button type="button" class="boton-primario" data-siguiente="3">Siguiente</button>
+        </div>
+      </section>
+
+      <!-- ===================== PASO 3: Email personal ===================== -->
+      <section class="paso" id="paso-3" data-paso="3">
+        <h2>Tu correo personal</h2>
+        <p class="descripcion-paso">
+          Lo usaremos para enviarte tu usuario, contraseña y tu carnet de voluntario
+          cuando tu registro sea aprobado.
+        </p>
+
+        <div class="campo">
+          <label for="email-personal">Correo electrónico</label>
+          <input type="email" id="email-personal" autocomplete="email" placeholder="tunombre@correo.com" required>
+        </div>
+
+        <div class="grupo-botones">
+          <button type="button" class="boton-secundario" id="btn-enviar-codigo">Enviar código de verificación</button>
+        </div>
+        <p class="estado-verificacion-email pendiente" id="estado-envio-codigo"></p>
+
+        <div class="campo oculto" id="bloque-codigo">
+          <label for="codigo-verificacion">Código de verificación</label>
+          <div class="fila-verificacion">
+            <input type="text" id="codigo-verificacion" inputmode="numeric" placeholder="123456" maxlength="6">
+            <button type="button" class="boton-secundario" id="btn-verificar-codigo">Verificar</button>
+          </div>
+          <p class="ayuda-campo">Escribe aquí el código de 6 dígitos que te llegó por correo.</p>
+          <p class="estado-verificacion-email pendiente" id="estado-verificacion-email"></p>
+        </div>
+
+        <p class="ayuda-campo">
+          Puedes verificar tu correo ahora o continuar sin verificarlo; lo confirmaremos más adelante.
+        </p>
+
+        <div id="error-paso-3" class="mensaje mensaje-error"></div>
+
+        <div class="grupo-botones">
+          <button type="button" class="boton-secundario" data-anterior="2">Atrás</button>
+          <button type="button" class="boton-primario" data-siguiente="4">Siguiente</button>
+        </div>
+      </section>
+
+      <!-- ===================== PASO 4: Dirección ===================== -->
+      <section class="paso" id="paso-4" data-paso="4">
+        <h2>¿Dónde vives?</h2>
+        <p class="descripcion-paso">Busca tu dirección o mueve el pin en el mapa hasta el lugar correcto.</p>
+
+        <div class="buscador-direccion">
+          <input type="text" id="buscar-direccion" placeholder="Escribe tu dirección o sector">
+          <button type="button" class="boton-secundario" id="btn-buscar-direccion">Buscar</button>
+        </div>
+
+        <div id="mapa"></div>
+        <p class="coordenadas-info" id="info-coordenadas">Toca el mapa o busca tu dirección para marcar el punto exacto.</p>
+
+        <div class="campo">
+          <label for="ciudad">Ciudad</label>
+          <input type="text" id="ciudad" placeholder="Ej: Barquisimeto" required>
+        </div>
+
+        <div class="campo">
+          <label for="estado-provincia">Estado</label>
+          <select id="estado-provincia" required>
+            <option value="">Selecciona tu estado</option>
+            <option>Amazonas</option>
+            <option>Anzoátegui</option>
+            <option>Apure</option>
+            <option>Aragua</option>
+            <option>Barinas</option>
+            <option>Bolívar</option>
+            <option>Carabobo</option>
+            <option>Cojedes</option>
+            <option>Delta Amacuro</option>
+            <option>Distrito Capital</option>
+            <option>Falcón</option>
+            <option>Guárico</option>
+            <option>Lara</option>
+            <option>Mérida</option>
+            <option>Miranda</option>
+            <option>Monagas</option>
+            <option>Nueva Esparta</option>
+            <option>Portuguesa</option>
+            <option>Sucre</option>
+            <option>Táchira</option>
+            <option>Trujillo</option>
+            <option>La Guaira</option>
+            <option>Yaracuy</option>
+            <option>Zulia</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="direccion-texto">Dirección detallada</label>
+          <textarea id="direccion-texto" placeholder="Calle, casa/edificio, sector, punto de referencia..." required></textarea>
+        </div>
+
+        <div id="error-paso-4" class="mensaje mensaje-error"></div>
+
+        <div class="grupo-botones">
+          <button type="button" class="boton-secundario" data-anterior="3">Atrás</button>
+          <button type="button" class="boton-primario" data-siguiente="5">Siguiente</button>
+        </div>
+      </section>
+
+      <!-- ===================== PASO 5: Fotos ===================== -->
+      <section class="paso" id="paso-5" data-paso="5">
+        <h2>Verifiquemos tu identidad</h2>
+        <p class="descripcion-paso">Esto nos ayuda a proteger a los niños confirmando quién eres.</p>
+
+        <div class="bloque-foto">
+          <p class="titulo-foto">Foto de tu rostro</p>
+          <label class="input-foto-boton" for="foto-rostro">Tomar o elegir foto</label>
+          <input type="file" id="foto-rostro" accept="image/*" capture="user">
+          <img id="preview-rostro" class="vista-previa-foto" alt="Vista previa de tu rostro">
+        </div>
+
+        <div class="bloque-foto">
+          <p class="titulo-foto">Foto de tu cédula (ambos lados o el lado con tu foto)</p>
+          <label class="input-foto-boton" for="foto-cedula">Tomar o elegir foto</label>
+          <input type="file" id="foto-cedula" accept="image/*" capture="environment">
+          <img id="preview-cedula" class="vista-previa-foto" alt="Vista previa de tu cédula">
+        </div>
+
+        <div class="aviso-privacidad">
+          Tus fotos y datos solo serán vistos por coordinadores verificados para confirmar tu identidad.
+          Nunca se publican.
+        </div>
+
+        <div id="error-paso-5" class="mensaje mensaje-error"></div>
+
+        <div class="grupo-botones">
+          <button type="button" class="boton-secundario" data-anterior="4">Atrás</button>
+          <button type="button" class="boton-primario" data-siguiente="6">Siguiente</button>
+        </div>
+      </section>
+
+      <!-- ===================== PASO 6: Resumen y envío ===================== -->
+      <section class="paso" id="paso-6" data-paso="6">
+        <h2>Revisa tu información</h2>
+        <p class="descripcion-paso">Confirma que todo esté correcto antes de enviar.</p>
+
+        <dl class="resumen-bloque" id="resumen-datos"></dl>
+
+        <div class="miniaturas-resumen" id="resumen-fotos"></div>
+
+        <div class="fila-consentimiento">
+          <input type="checkbox" id="consentimiento" required>
+          <label for="consentimiento">
+            Confirmo que mis datos son verídicos y entiendo que ningún voluntario tiene acceso a
+            información de los niños hasta ser aprobado.
+          </label>
+        </div>
+
+        <div id="error-paso-6" class="mensaje mensaje-error"></div>
+        <div id="info-paso-6" class="mensaje mensaje-info"></div>
+
+        <div class="grupo-botones">
+          <button type="button" class="boton-secundario" data-anterior="5">Atrás</button>
+          <button type="submit" class="boton-acento" id="btn-enviar">
+            <span id="texto-btn-enviar">Enviar para verificación</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ===================== Pantalla final de éxito ===================== -->
+      <section class="paso" id="paso-exito">
+        <div class="pantalla-exito">
+          <svg class="icono-exito" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="50" cy="50" r="48" fill="#e8f3ec"/>
+            <circle cx="50" cy="50" r="40" fill="none" stroke="#2e6b46" stroke-width="4"/>
+            <path d="M32 52 L45 65 L70 38" fill="none" stroke="#2e6b46" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <h2>¡Listo!</h2>
+          <p>Revisaremos tu información y te escribiremos a tu correo en breve.</p>
+          <a href="index.html" class="boton boton-primario" style="margin-top: 24px;">Volver al inicio</a>
+        </div>
+      </section>
+
+    </form>
+
+  </div>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/firebase-config.js"></script>
+<script type="module" src="js/registro-voluntario.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+// ==============================================================================
+// storage.rules — Lienzo
+// ==============================================================================
+// Reglas de seguridad para Cloud Storage. Cubren exactamente las rutas
+// definidas en ARQUITECTURA.md:
+//
+//   /voluntarios/{uid}/rostro.jpg
+//   /voluntarios/{uid}/cedula.jpg
+//
+// - write: solo el propio uid puede subir sus fotos (nadie mas, ni siquiera
+//   admin/verificador, porque solo el propietario deberia poder reemplazar
+//   sus propias fotos durante el registro).
+// - read: el propio uid, o un admin/verificador. Las fotos de identidad de
+//   un voluntario NUNCA son publicas ni accesibles por otros voluntarios.
+//
+// IMPORTANTE: a diferencia de Firestore, en Storage Rules el
+// "request.auth.token" SI incluye los custom claims asignados con
+// admin.auth().setCustomUserClaims (igual que en el ID token normal), por
+// lo que podemos chequear el rol directamente aqui.
+// ==============================================================================
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function esAdmin() {
+      return request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    function esVerificador() {
+      return request.auth != null && request.auth.token.role == 'verificador';
+    }
+
+    function esAdminOVerificador() {
+      return esAdmin() || esVerificador();
+    }
+
+    function esPropietario(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    match /voluntarios/{uid}/{archivo} {
+      // Lectura: el propio voluntario, o un admin/verificador.
+      allow read: if esPropietario(uid) || esAdminOVerificador();
+
+      // Escritura (subida): unicamente el propio uid. Limitamos ademas el
+      // tamano (10 MB maximo por foto) y exigimos que sea una imagen, como
+      // capa adicional de proteccion basica contra abuso del storage.
+      allow write: if esPropietario(uid)
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      // Nadie puede borrar las fotos desde el cliente; si se necesita en el
+      // futuro, debe hacerse via Cloud Function con Admin SDK.
+      allow delete: if false;
+    }
+
+    // Cualquier otra ruta queda cerrada por defecto.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

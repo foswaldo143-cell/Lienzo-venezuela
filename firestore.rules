@@ -1,0 +1,115 @@
+// ==============================================================================
+// firestore.rules — Lienzo
+// ==============================================================================
+// Reglas de seguridad para Firestore. Implementan exactamente lo descrito en
+// ARQUITECTURA.md:
+//
+//   - usuarios/{uid}:
+//       create: solo el propio uid, y solo con estado/rol forzados a los
+//               valores "pendientes" (el cliente nunca puede auto-aprobarse).
+//       update: el propietario solo puede tocar campos NO sensibles. Los
+//               campos sensibles (estado, estadoVerificacion, rol,
+//               verificadoPor, confianzaIA, qrToken, motivoRechazo,
+//               fechaVerificacion) quedan bloqueados para el cliente: solo
+//               Cloud Functions (Admin SDK) los puede cambiar, porque el
+//               Admin SDK ignora estas reglas.
+//       read:   el propio dueno, o un admin/verificador (via custom claim
+//               "role" en el ID token).
+//   - verificaciones/{uid}: solo lectura para admin/verificador. Ninguna
+//       escritura desde el cliente (solo Cloud Functions, que usan el Admin
+//       SDK y por lo tanto no pasan por estas reglas).
+//
+// El rol se verifica SIEMPRE con request.auth.token.role (custom claim del
+// ID token de Firebase Auth), nunca con un campo de Firestore editable por
+// el usuario.
+// ==============================================================================
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Helpers de rol (custom claims del ID token)
+    // -------------------------------------------------------------------------
+    function esAdmin() {
+      return request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    function esVerificador() {
+      return request.auth != null && request.auth.token.role == 'verificador';
+    }
+
+    function esAdminOVerificador() {
+      return esAdmin() || esVerificador();
+    }
+
+    function esPropietario(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // -------------------------------------------------------------------------
+    // usuarios/{uid}
+    // -------------------------------------------------------------------------
+    match /usuarios/{uid} {
+
+      // Lectura: el propio dueno del perfil, o admin/verificador.
+      allow read: if esPropietario(uid) || esAdminOVerificador();
+
+      // Creacion: solo el propio uid puede crear su documento, y SOLO si
+      // los campos de estado/rol vienen forzados a los valores "pendientes"
+      // definidos por la arquitectura. Esto impide que alguien cree su
+      // propio perfil ya "aprobado" o con rol de admin/verificador.
+      allow create: if esPropietario(uid)
+        && request.resource.data.estado == 'pendiente_verificacion'
+        && request.resource.data.rol == 'voluntario_pendiente'
+        && request.resource.data.keys().hasAll(['cedula', 'nombre', 'apellido', 'rolSolicitado', 'estado', 'rol']);
+
+      // Actualizacion: el propietario puede editar su perfil, pero NUNCA
+      // los campos sensibles que determinan su nivel de acceso/confianza.
+      // admin/verificador pueden actualizar cualquier campo (por ejemplo
+      // para aprobar/rechazar manualmente desde el futuro dashboard).
+      allow update: if esAdminOVerificador()
+        || (
+          esPropietario(uid)
+          // Ninguno de los campos sensibles puede cambiar en esta escritura.
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+               'estado',
+               'estadoVerificacion',
+               'rol',
+               'verificadoPor',
+               'confianzaIA',
+               'qrToken',
+               'motivoRechazo',
+               'fechaVerificacion'
+             ])
+        );
+
+      // Nadie puede borrar perfiles desde el cliente (ni siquiera el dueno).
+      // Si en el futuro se necesita "baja" de un voluntario, debe hacerse
+      // con una Cloud Function que aplique las reglas de negocio correctas.
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // verificaciones/{uid}  (bitacora/auditoria)
+    // -------------------------------------------------------------------------
+    match /verificaciones/{uid} {
+      // Solo admin/verificador pueden leer la bitacora de verificacion.
+      allow read: if esAdminOVerificador();
+
+      // Ninguna escritura desde el cliente: solo Cloud Functions (Admin
+      // SDK), que no pasan por estas reglas, pueden escribir aqui.
+      allow write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Cualquier otra coleccion no contemplada en esta primera entrega
+    // (centros de cuidado, dashboard de coordinador, etc.) queda cerrada por
+    // defecto hasta que se disene explicitamente.
+    // -------------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<title>Red Lienzo — Crear cuenta</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="franja-superior"></div>
+<main class="pantalla">
+  <div class="contenedor">
+
+    <div class="encabezado-marca">
+      <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo Red Lienzo">
+        <circle cx="50" cy="50" r="48" fill="#1b3a5c"/>
+        <path d="M50 18 C 33 18, 20 31, 20 47 C 20 62, 33 74, 48 80 C 49 80.5, 51 80.5, 52 80 C 67 74, 80 62, 80 47 C 80 31, 67 18, 50 18 Z"
+              fill="none" stroke="#ffffff" stroke-width="3.2"/>
+        <circle cx="40" cy="46" r="6.5" fill="#c1672b"/>
+        <circle cx="60" cy="46" r="6.5" fill="#ffffff"/>
+        <path d="M30 58 C 38 66, 62 66, 70 58" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </svg>
+      <h1>Crear cuenta</h1>
+      <p class="subtitulo">¿Cómo quieres ayudar?</p>
+    </div>
+
+    <div class="opciones-registro">
+
+      <button type="button" class="tarjeta-opcion" id="opcion-voluntario">
+        <svg class="icono-opcion" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="24" cy="16" r="8" fill="#1b3a5c"/>
+          <path d="M8 42 C 8 30, 16 26, 24 26 C 32 26, 40 30, 40 42" fill="none" stroke="#1b3a5c" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="36" cy="12" r="6" fill="#c1672b"/>
+        </svg>
+        <span class="texto-opcion">
+          <h2>Quiero ser Voluntario</h2>
+          <p>Apoya directamente en el cuidado diario de los niños en un centro.</p>
+        </span>
+      </button>
+
+      <button type="button" class="tarjeta-opcion deshabilitada" id="opcion-centro" aria-disabled="true">
+        <svg class="icono-opcion" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="8" y="18" width="32" height="22" rx="2" fill="#aab3bd"/>
+          <path d="M6 20 L24 6 L42 20" fill="none" stroke="#aab3bd" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="20" y="26" width="8" height="14" fill="#ffffff"/>
+        </svg>
+        <span class="texto-opcion">
+          <h2>Registrar un Centro de Cuidado</h2>
+          <p>Para coordinadores que dirigen un centro improvisado de cuidado.</p>
+          <span class="etiqueta-proximamente">Próximamente</span>
+        </span>
+      </button>
+
+    </div>
+
+    <div id="mensaje-proximamente" class="mensaje mensaje-info" style="margin-top: 18px;"></div>
+
+    <div class="pie-secundario">
+      <p>¿Ya tienes cuenta?</p>
+      <a class="boton-texto" href="index.html">Iniciar sesión</a>
+    </div>
+
+  </div>
+</main>
+
+<script src="js/registro.js"></script>
+</body>
+</html>
