@@ -1,5 +1,5 @@
 /* =========================================================
-   Red Lienzo — Lógica del panel (dashboard.html)
+   ChildCare — Lógica del panel (dashboard.html)
    =========================================================
    Esta misma página sirve para TRES audiencias distintas, segun el
    custom claim "role" del usuario que inicio sesion:
@@ -423,7 +423,7 @@ async function mostrarVistaVoluntario(uid, datos) {
 
   const contenedor = document.getElementById("tarjeta-estado-voluntario");
   if (!datos) {
-    contenedor.innerHTML = `<p>No encontramos tu perfil. Si crees que esto es un error, contacta a un coordinador de Lienzo.</p>`;
+    contenedor.innerHTML = `<p>No encontramos tu perfil. Si crees que esto es un error, contacta a un coordinador de ChildCare.</p>`;
     return;
   }
 
@@ -440,7 +440,7 @@ async function mostrarVistaVoluntario(uid, datos) {
       ${ICONOS_ESTADO.rechazado}
       <h2 style="color:var(--error); font-size:var(--texto-xl);">No fue posible aprobar tu registro</h2>
       <p><strong>Motivo:</strong> ${escaparHtmlCliente(datos.motivoRechazo || "No se especificó un motivo.")}</p>
-      <p style="font-size:14px;">Si crees que esto fue un error, contacta a un coordinador de Lienzo para que revisen tu caso.</p>
+      <p style="font-size:14px;">Si crees que esto fue un error, contacta a un coordinador de ChildCare para que revisen tu caso.</p>
     `;
   } else {
     contenedor.innerHTML = `
@@ -910,12 +910,17 @@ function abrirModalUsuario(uid) {
   }
 
   document.getElementById("btn-contactar-usuario").addEventListener("click", () => {
-    const telefono = (u.telefono || "").replace(/\D/g, "");
-    if (!telefono) {
+    // El teléfono se guarda en formato E.164 "+584121234567", por lo que al
+    // quitar los no-dígitos ya queda como "584121234567" (con el código de
+    // país 58 incluido). Solo agregamos "58" en el caso legado de que algún
+    // registro tuviera únicamente los 10 dígitos locales.
+    const soloDigitos = (u.telefono || "").replace(/\D/g, "");
+    if (!soloDigitos) {
       mostrarMensajeModal("Este usuario no tiene un número de teléfono registrado.", "error");
       return;
     }
-    window.open(`https://wa.me/58${telefono}`, "_blank", "noopener");
+    const numeroWhatsApp = soloDigitos.length === 10 ? "58" + soloDigitos : soloDigitos;
+    window.open(`https://wa.me/${numeroWhatsApp}`, "_blank", "noopener");
   });
 
   document.getElementById("btn-reenviar-password-usuario").addEventListener("click", async (evento) => {

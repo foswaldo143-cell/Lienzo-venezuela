@@ -1,5 +1,5 @@
 /* =========================================================
-   Red Lienzo — Datos de Estados y Ciudades/poblados de Venezuela
+   ChildCare — Datos de Estados y Ciudades/poblados de Venezuela
    =========================================================
    Se usa en dos lugares:
      1. El wizard de registro (paso de direccion), para que la

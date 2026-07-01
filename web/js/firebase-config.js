@@ -1,5 +1,5 @@
 /* =========================================================
-   Red Lienzo — Configuración de Firebase
+   ChildCare — Configuración de Firebase
    =========================================================
    IMPORTANTE PARA OSVALDO:
    Estos son los valores REALES del proyecto de Firebase

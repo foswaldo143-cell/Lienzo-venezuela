@@ -1,7 +1,7 @@
 /**
- * index.js — Cloud Functions de Lienzo
+ * index.js — Cloud Functions de ChildCare
  * ==============================================================================
- * Backend de la plataforma humanitaria Lienzo (apoyo a centros de cuidado de
+ * Backend de la plataforma humanitaria ChildCare (apoyo a centros de cuidado de
  * ninos huerfanos/separados tras el terremoto en Venezuela).
  *
  * CONTEXTO CRITICO DE SEGURIDAD:
@@ -106,7 +106,7 @@ async function enviarCorreoConAdjuntos({ to, subject, html, attachments }) {
   }
   try {
     await transporte.sendMail({
-      from: `"Lienzo - Red de Apoyo" <${obtenerRemitente()}>`,
+      from: `"ChildCare - Red de Apoyo" <${obtenerRemitente()}>`,
       to,
       subject,
       html,
@@ -337,7 +337,7 @@ exports.verificarCedulaDisponible = functions.https.onCall(async (data) => {
       return {
         disponible: false,
         motivo: 'restringido',
-        mensaje: 'Esta cedula no puede registrarse en la plataforma. Si crees que esto es un error, contacta a un coordinador de Lienzo.',
+        mensaje: 'Esta cedula no puede registrarse en la plataforma. Si crees que esto es un error, contacta a un coordinador de ChildCare.',
       };
     }
     if (bloqueo.tipo === 'temporal') {
@@ -363,7 +363,7 @@ exports.verificarCedulaDisponible = functions.https.onCall(async (data) => {
     return {
       disponible: false,
       motivo: 'ya_registrado',
-      mensaje: 'Esta cedula ya fue registrada anteriormente en Lienzo. No es posible registrarse dos veces con la misma cedula. Si necesitas ayuda con tu cuenta existente, contacta a un coordinador.',
+      mensaje: 'Esta cedula ya fue registrada anteriormente en ChildCare. No es posible registrarse dos veces con la misma cedula. Si necesitas ayuda con tu cuenta existente, contacta a un coordinador.',
     };
   }
 
@@ -667,7 +667,7 @@ async function aprobarVoluntario(uid) {
 
   const cuerpoCorreo = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1f2937;">
-      <h2 style="color:#0f766e;">Bienvenido(a) a Lienzo, ${escaparHtml(nombreCompleto)}</h2>
+      <h2 style="color:#0f766e;">Bienvenido(a) a ChildCare, ${escaparHtml(nombreCompleto)}</h2>
       <p>Tu registro como voluntario(a) fue <strong>aprobado</strong>. A continuacion encontraras tus credenciales de acceso y tu carnet digital.</p>
 
       <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:16px; margin:16px 0;">
@@ -681,7 +681,7 @@ async function aprobarVoluntario(uid) {
       ${carnetHtml}
 
       <p style="margin-top:24px; font-size:13px; color:#6b7280;">
-        Si tienes dudas, contacta a un coordinador de Lienzo. Gracias por ayudar a proteger a los ninos de los centros de cuidado.
+        Si tienes dudas, contacta a un coordinador de ChildCare. Gracias por ayudar a proteger a los ninos de los centros de cuidado.
       </p>
     </div>
   `;
@@ -699,7 +699,7 @@ async function aprobarVoluntario(uid) {
 
   const enviado = await enviarCorreoConAdjuntos({
     to: usuario.emailPersonal,
-    subject: 'Lienzo - Tu registro fue aprobado (credenciales y carnet)',
+    subject: 'ChildCare - Tu registro fue aprobado (credenciales y carnet)',
     html: cuerpoCorreo,
     attachments: adjuntos,
   });
@@ -723,7 +723,7 @@ function construirHtmlCarnet({ nombreCompleto, cedula, telefono, ciudad, estadoP
     <table style="width:100%; max-width:480px; border:2px solid #0f766e; border-radius:12px; overflow:hidden; border-collapse:collapse; font-family: Arial, sans-serif;">
       <tr>
         <td style="background:#0f766e; color:#ffffff; padding:10px 16px; font-weight:bold; font-size:14px;" colspan="3">
-          LIENZO &middot; Carnet de Voluntario(a)
+          CHILDCARE &middot; Carnet de Voluntario(a)
         </td>
       </tr>
       <tr>
@@ -780,10 +780,10 @@ async function rechazarVoluntario(uid, motivo) {
 
   const cuerpoCorreo = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color:#1f2937;">
-      <h2 style="color:#9a3412;">Resultado de tu registro en Lienzo</h2>
+      <h2 style="color:#9a3412;">Resultado de tu registro en ChildCare</h2>
       <p>Hola ${escaparHtml(nombreCompleto)},</p>
       <p>
-        Gracias por tu interes en colaborar con los centros de cuidado de Lienzo.
+        Gracias por tu interes en colaborar con los centros de cuidado de ChildCare.
         Lamentablemente, en esta ocasion no fue posible aprobar tu registro
         como voluntario(a).
       </p>
@@ -793,18 +793,18 @@ async function rechazarVoluntario(uid, motivo) {
       <p>
         Si crees que esto se debio a un error o un malentendido (por ejemplo,
         una foto poco clara o un dato mal escrito), por favor contacta a un
-        coordinador de Lienzo para revisar tu caso nuevamente. Entendemos que
+        coordinador de ChildCare para revisar tu caso nuevamente. Entendemos que
         los procesos de verificacion pueden tener fallas y queremos darte la
         oportunidad de aclarar cualquier inconsistencia.
       </p>
       <p>Gracias por tu comprension y por tu interes en apoyar a los ninos de los centros de cuidado.</p>
-      <p style="color:#6b7280; font-size:13px;">— Equipo de Lienzo</p>
+      <p style="color:#6b7280; font-size:13px;">— Equipo de ChildCare</p>
     </div>
   `;
 
   await enviarCorreo({
     to: usuario.emailPersonal,
-    subject: 'Lienzo - Resultado de tu registro como voluntario',
+    subject: 'ChildCare - Resultado de tu registro como voluntario',
     html: cuerpoCorreo,
   });
 }
@@ -829,7 +829,7 @@ async function manejarRechazoDatosNoCoinciden(uid, usuario) {
 
   const cuerpoCorreo = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color:#1f2937;">
-      <h2 style="color:#9a3412;">Resultado de tu registro en Lienzo</h2>
+      <h2 style="color:#9a3412;">Resultado de tu registro en ChildCare</h2>
       <p>Hola ${escaparHtml(nombreCompleto)},</p>
       <p>
         Revisamos tu solicitud de registro como voluntario(a) y notamos que
@@ -846,14 +846,14 @@ async function manejarRechazoDatosNoCoinciden(uid, usuario) {
         cedula sean claras, bien iluminadas y legibles, y que los datos
         coincidan exactamente con tu documento de identidad.
       </p>
-      <p>Si crees que esto se debio a un error de nuestro sistema, contacta a un coordinador de Lienzo.</p>
-      <p style="color:#6b7280; font-size:13px;">— Equipo de Lienzo</p>
+      <p>Si crees que esto se debio a un error de nuestro sistema, contacta a un coordinador de ChildCare.</p>
+      <p style="color:#6b7280; font-size:13px;">— Equipo de ChildCare</p>
     </div>
   `;
 
   await enviarCorreo({
     to: emailPersonal,
-    subject: 'Lienzo - No pudimos verificar tu registro',
+    subject: 'ChildCare - No pudimos verificar tu registro',
     html: cuerpoCorreo,
   });
 
@@ -899,11 +899,11 @@ async function manejarRechazoNoElegible(uid, usuario) {
 
   const cuerpoCorreo = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color:#1f2937;">
-      <h2 style="color:#9a3412;">Resultado de tu registro en Lienzo</h2>
+      <h2 style="color:#9a3412;">Resultado de tu registro en ChildCare</h2>
       <p>Hola ${escaparHtml(nombreCompleto)},</p>
       <p>
         Gracias por tu interes en colaborar con los centros de cuidado de
-        Lienzo. Lamentablemente, despues de revisar tu solicitud, no fue
+        ChildCare. Lamentablemente, despues de revisar tu solicitud, no fue
         posible aceptar tu registro como voluntario(a).
       </p>
       <p>
@@ -919,16 +919,16 @@ async function manejarRechazoNoElegible(uid, usuario) {
           contribuir con una <strong>donacion</strong>, una forma igualmente
           valiosa de ayudarnos a seguir protegiendo y cuidando a estos ninos.
         </p>
-        <p style="margin:0;">Si te interesa, contacta a un coordinador de Lienzo para mas informacion sobre como donar.</p>
+        <p style="margin:0;">Si te interesa, contacta a un coordinador de ChildCare para mas informacion sobre como donar.</p>
       </div>
       <p>Gracias por tu comprension.</p>
-      <p style="color:#6b7280; font-size:13px;">— Equipo de Lienzo</p>
+      <p style="color:#6b7280; font-size:13px;">— Equipo de ChildCare</p>
     </div>
   `;
 
   await enviarCorreo({
     to: usuario.emailPersonal,
-    subject: 'Lienzo - Resultado de tu registro como voluntario',
+    subject: 'ChildCare - Resultado de tu registro como voluntario',
     html: cuerpoCorreo,
   });
 }
@@ -996,7 +996,7 @@ exports.enviarCodigoVerificacionEmail = functions.https.onCall(async (data, cont
 
   const cuerpoCorreo = `
     <div style="font-family: Arial, sans-serif; max-width: 480px; margin:0 auto; color:#1f2937;">
-      <h2 style="color:#0f766e;">Tu codigo de verificacion - Lienzo</h2>
+      <h2 style="color:#0f766e;">Tu codigo de verificacion - ChildCare</h2>
       <p>Usa este codigo para verificar tu correo personal:</p>
       <p style="font-size:32px; font-weight:bold; letter-spacing:6px; text-align:center; background:#f0fdf4; padding:16px; border-radius:8px; color:#0f766e;">
         ${codigo}
@@ -1007,7 +1007,7 @@ exports.enviarCodigoVerificacionEmail = functions.https.onCall(async (data, cont
 
   const enviado = await enviarCorreo({
     to: usuario.emailPersonal,
-    subject: 'Lienzo - Tu codigo de verificacion',
+    subject: 'ChildCare - Tu codigo de verificacion',
     html: cuerpoCorreo,
   });
 
@@ -1333,7 +1333,7 @@ exports.reenviarPassword = functions.https.onCall(async (data, context) => {
   const nombreCompleto = `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim();
   const enviado = await enviarCorreo({
     to: usuario.emailPersonal,
-    subject: 'Lienzo - Tu nueva contrasena de acceso',
+    subject: 'ChildCare - Tu nueva contrasena de acceso',
     html: construirCuerpoCorreoNuevaPassword({ nombreCompleto, cedula: usuario.cedula, nuevaPassword }),
   });
 
@@ -1343,14 +1343,14 @@ exports.reenviarPassword = functions.https.onCall(async (data, context) => {
 function construirCuerpoCorreoNuevaPassword({ nombreCompleto, cedula, nuevaPassword }) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 480px; margin:0 auto; color:#1f2937;">
-      <h2 style="color:#0f766e;">Tu nueva contrasena - Lienzo</h2>
+      <h2 style="color:#0f766e;">Tu nueva contrasena - ChildCare</h2>
       <p>Hola ${escaparHtml(nombreCompleto)},</p>
-      <p>Un coordinador de Lienzo (o tu solicitud de recuperacion) generaron una nueva contrasena de acceso para tu cuenta:</p>
+      <p>Un coordinador de ChildCare (o tu solicitud de recuperacion) generaron una nueva contrasena de acceso para tu cuenta:</p>
       <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:16px; margin:16px 0;">
         <p style="margin:4px 0;"><strong>Usuario (tu cedula):</strong> ${escaparHtml(cedula)}</p>
         <p style="margin:4px 0;"><strong>Nueva contrasena:</strong> ${escaparHtml(nuevaPassword)}</p>
       </div>
-      <p style="font-size:13px; color:#6b7280;">Por tu seguridad, te recomendamos cambiarla despues de iniciar sesion (puedes hacerlo desde tu Perfil). Si no solicitaste este cambio, contacta de inmediato a un coordinador de Lienzo.</p>
+      <p style="font-size:13px; color:#6b7280;">Por tu seguridad, te recomendamos cambiarla despues de iniciar sesion (puedes hacerlo desde tu Perfil). Si no solicitaste este cambio, contacta de inmediato a un coordinador de ChildCare.</p>
     </div>
   `;
 }
@@ -1385,16 +1385,16 @@ exports.solicitarRecuperacionPassword = functions.https.onCall(async (data) => {
   const uid = docUsuario.id;
 
   if (usuario.deshabilitado) {
-    return { ok: false, mensaje: 'Tu cuenta esta inhabilitada. Contacta a un coordinador de Lienzo.' };
+    return { ok: false, mensaje: 'Tu cuenta esta inhabilitada. Contacta a un coordinador de ChildCare.' };
   }
   if (usuario.estadoVerificacion !== 'aprobado') {
     return { ok: false, mensaje: 'Tu cuenta todavia no ha sido aprobada por un coordinador. La recuperacion de contrasena solo esta disponible para cuentas ya aprobadas.' };
   }
   if (!usuario.emailVerificado) {
-    return { ok: false, mensaje: 'Tu correo personal todavia no esta verificado. Contacta a un coordinador de Lienzo para verificarlo antes de poder recuperar tu contrasena.' };
+    return { ok: false, mensaje: 'Tu correo personal todavia no esta verificado. Contacta a un coordinador de ChildCare para verificarlo antes de poder recuperar tu contrasena.' };
   }
   if (!usuario.emailPersonal) {
-    return { ok: false, mensaje: 'Tu cuenta no tiene un correo personal registrado. Contacta a un coordinador de Lienzo.' };
+    return { ok: false, mensaje: 'Tu cuenta no tiene un correo personal registrado. Contacta a un coordinador de ChildCare.' };
   }
 
   const nuevaPassword = generarPasswordTemporal();
@@ -1403,7 +1403,7 @@ exports.solicitarRecuperacionPassword = functions.https.onCall(async (data) => {
   const nombreCompleto = `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim();
   await enviarCorreo({
     to: usuario.emailPersonal,
-    subject: 'Lienzo - Recuperacion de contrasena',
+    subject: 'ChildCare - Recuperacion de contrasena',
     html: construirCuerpoCorreoNuevaPassword({ nombreCompleto, cedula: usuario.cedula, nuevaPassword }),
   });
 
@@ -1472,7 +1472,7 @@ exports.regenerarCarnet = functions.https.onCall(async (data, context) => {
 
   const enviado = await enviarCorreoConAdjuntos({
     to: usuario.emailPersonal,
-    subject: 'Lienzo - Tu carnet de voluntario(a) actualizado',
+    subject: 'ChildCare - Tu carnet de voluntario(a) actualizado',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin:0 auto; color:#1f2937;">
         <h2 style="color:#0f766e;">Carnet actualizado</h2>

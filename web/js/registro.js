@@ -1,5 +1,5 @@
 /* =========================================================
-   Red Lienzo — Navegación de registro.html
+   ChildCare — Navegación de registro.html
    ========================================================= */
 
 const opcionVoluntario = document.getElementById("opcion-voluntario");
@@ -12,6 +12,6 @@ opcionVoluntario.addEventListener("click", () => {
 
 opcionCentro.addEventListener("click", () => {
   mensajeProximamente.textContent =
-    "El registro de Centros de Cuidado estará disponible en una próxima entrega. Por ahora, si coordinas un centro, contacta directamente al equipo de Red Lienzo.";
+    "El registro de Centros de Cuidado estará disponible en una próxima entrega. Por ahora, si coordinas un centro, contacta directamente al equipo de ChildCare.";
   mensajeProximamente.classList.add("visible");
 });

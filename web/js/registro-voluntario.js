@@ -1,5 +1,5 @@
 /* =========================================================
-   Red Lienzo — Lógica del wizard de registro de voluntario
+   ChildCare — Lógica del wizard de registro de voluntario
    ========================================================= */
 
 import { auth, db, storage } from "./firebase-init.js";
@@ -423,7 +423,9 @@ async function solicitarCodigoVerificacion(boton) {
     }
   } catch (error) {
     console.warn("No se pudo enviar el código de verificación todavía:", error);
-    if (error && error.code === "functions/resource-exhausted") {
+    if (error && error.code === "auth/email-already-in-use") {
+      estadoEnvioCodigo.textContent = "Esta cédula ya fue registrada anteriormente. No es posible registrarse dos veces con la misma cédula. Si necesitas ayuda con tu cuenta, contacta a un coordinador.";
+    } else if (error && error.code === "functions/resource-exhausted") {
       estadoEnvioCodigo.textContent = "Ya enviamos un código hace poco. Espera un momento antes de pedir otro.";
     } else {
       estadoEnvioCodigo.textContent = "No pudimos conectar con el servidor para enviar el código. Intenta de nuevo en un momento.";
@@ -645,7 +647,11 @@ formVoluntario.addEventListener("submit", async (evento) => {
 
   } catch (error) {
     console.error("Error al enviar el registro:", error);
-    mostrarErrorPaso("error-paso-6", "No pudimos completar tu registro en este momento. Verifica tu conexión a internet e intenta de nuevo.");
+    if (error && error.code === "auth/email-already-in-use") {
+      mostrarErrorPaso("error-paso-6", "Esta cédula ya fue registrada anteriormente. No es posible registrarse dos veces con la misma cédula. Si necesitas ayuda con tu cuenta, contacta a un coordinador.");
+    } else {
+      mostrarErrorPaso("error-paso-6", "No pudimos completar tu registro en este momento. Verifica tu conexión a internet e intenta de nuevo.");
+    }
   } finally {
     btnEnviar.disabled = false;
     textoBtnEnviar.textContent = "Enviar para verificación";

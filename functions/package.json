@@ -1,6 +1,6 @@
 {
   "name": "lienzo-functions",
-  "description": "Backend (Cloud Functions) de Lienzo - plataforma humanitaria de apoyo a centros de cuidado tras el terremoto en Venezuela. Verificación de identidad de voluntarios, emisión de credenciales y carnet, y administración de roles.",
+  "description": "Backend (Cloud Functions) de ChildCare - plataforma humanitaria de apoyo a centros de cuidado tras el terremoto en Venezuela. Verificación de identidad de voluntarios, emisión de credenciales y carnet, y administración de roles.",
   "version": "1.0.0",
   "private": true,
   "engines": {

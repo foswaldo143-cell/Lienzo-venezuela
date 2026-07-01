@@ -1,5 +1,5 @@
 /* =========================================================
-   Red Lienzo — Inicialización del SDK de Firebase
+   ChildCare — Inicialización del SDK de Firebase
    =========================================================
    Este archivo SÍ es un módulo ES (usa import/export) y es el
    único lugar donde se llama a initializeApp(). Lee la

@@ -1,5 +1,5 @@
 // ==============================================================================
-// firestore.rules — Lienzo
+// firestore.rules — ChildCare
 // ==============================================================================
 // Reglas de seguridad para Firestore. Implementan exactamente lo descrito en
 // ARQUITECTURA.md:
@@ -69,7 +69,23 @@ service cloud.firestore {
       allow create: if esPropietario(uid)
         && request.resource.data.estado == 'pendiente_verificacion'
         && request.resource.data.rol == 'voluntario_pendiente'
-        && request.resource.data.keys().hasAll(['cedula', 'nombre', 'apellido', 'rolSolicitado', 'estado', 'rol']);
+        && request.resource.data.keys().hasAll(['cedula', 'nombre', 'apellido', 'rolSolicitado', 'estado', 'rol'])
+        // Endurecimiento: el cliente NUNCA puede sembrar campos sensibles al
+        // CREAR su documento. Sin esto, un registrante malicioso podria crear
+        // su perfil ya con estadoVerificacion:'aprobado' (o restringido:false,
+        // etc.) y saltarse por completo la cola de revision manual — el
+        // control central de seguridad contra infiltracion. Estos campos solo
+        // los escriben las Cloud Functions (Admin SDK), server-side.
+        && !request.resource.data.keys().hasAny([
+             'estadoVerificacion',
+             'verificadoPor',
+             'confianzaIA',
+             'qrToken',
+             'motivoRechazo',
+             'fechaVerificacion',
+             'deshabilitado',
+             'restringido'
+           ]);
 
       // Actualizacion: el propietario puede editar su perfil, pero NUNCA
       // los campos sensibles que determinan su nivel de acceso/confianza.

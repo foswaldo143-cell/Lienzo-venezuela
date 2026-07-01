@@ -1,5 +1,5 @@
 /* =========================================================
-   Red Lienzo — Lógica de login (index.html)
+   ChildCare — Lógica de login (index.html)
    El usuario solo conoce su cédula. Internamente construimos
    el email sintético de Firebase Auth: CEDULA@voluntarios.lienzo.app
    ========================================================= */
@@ -77,7 +77,7 @@ formLogin.addEventListener("submit", async (evento) => {
   } catch (error) {
     console.error("Error de inicio de sesión:", error);
     if (error && error.code === "auth/user-disabled") {
-      mostrarError("Tu cuenta fue inhabilitada por un coordinador de Lienzo. Si crees que esto es un error, contáctanos.");
+      mostrarError("Tu cuenta fue inhabilitada por un coordinador de ChildCare. Si crees que esto es un error, contáctanos.");
     } else {
       mostrarError("No pudimos iniciar tu sesión. Revisa tu cédula y contraseña e intenta de nuevo.");
     }

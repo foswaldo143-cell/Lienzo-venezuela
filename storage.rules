@@ -1,5 +1,5 @@
 // ==============================================================================
-// storage.rules — Lienzo
+// storage.rules — ChildCare
 // ==============================================================================
 // Reglas de seguridad para Cloud Storage. Cubren exactamente las rutas
 // definidas en ARQUITECTURA.md:

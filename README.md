@@ -1,4 +1,4 @@
-# Guía de configuración — Lienzo (primera entrega)
+# Guía de configuración — ChildCare (primera entrega)
 
 Esta entrega incluye: login, elección de rol, y el flujo completo de registro de voluntarios (formulario, fotos, verificación con fallback manual, correos, carnet con QR). El módulo de Centros de Cuidado queda para la siguiente entrega.
 

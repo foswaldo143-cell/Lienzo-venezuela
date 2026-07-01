@@ -1,4 +1,4 @@
-# Arquitectura — Plataforma Lienzo / Red de Apoyo a Centros de Cuidado
+# Arquitectura — Plataforma ChildCare / Red de Apoyo a Centros de Cuidado
 
 Documento de referencia compartido. Frontend y backend deben respetar exactamente estos nombres de campos y colecciones para que ambos lados encajen sin fricción.
 
